@@ -53,10 +53,22 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        // match self.get_type() {
-        //     TermType::Atom => match
-        // }
-        Err(Error::TypeHintsRequired)
+        match self.get_type() {
+            // bool (t, f), unit (nil), unit struct (nil), unit variant (atom)
+            TermType::Atom => Err(Error::TypeHintsRequired),
+            // i8, i16, i32, i64, u8, u16, u32, u64, f32, f64 (i128, u128)
+            TermType::Number => Err(Error::TypeHintsRequired),
+            // char, string, byte array
+            TermType::Binary => Err(Error::TypeHintsRequired),
+            // seq
+            TermType::List => Err(Error::TypeHintsRequired),
+            // map, struct
+            TermType::Map => Err(Error::TypeHintsRequired),
+            // newtype variant, tuple, tuple struct, tuple variant, struct variant
+            TermType::Tuple => Err(Error::TypeHintsRequired),
+            _ => Err(Error::TypeHintsRequired),
+        }
+
     }
 
     fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value, Self::Error>

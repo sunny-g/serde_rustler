@@ -33,17 +33,3 @@ pub mod atoms;
 // pub mod de;
 pub mod error;
 pub mod ser;
-
-// rustler_export_nifs! {
-//     "Elixir.Xerde",
-//     [("serialize", 2, serialize)],
-//     None
-// }
-
-// fn serialize<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-//     // let num1: i64 = args[0].decode()?;
-//     // let num2: i64 = args[1].decode()?;
-
-//     // Ok((atoms::ok(), num1 + num2).encode(env))
-//     Ok((atoms::ok(), "error").encode(env))
-// }

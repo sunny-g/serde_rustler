@@ -16,7 +16,7 @@ impl<'a> From<Env<'a>> for Serializer<'a> {
 }
 
 impl<'a> Serializer<'a> {
-    fn to_term<T>(&'a self, value: &T) -> Result<Term<'a>, Error>
+    pub fn to_term<T>(&'a self, value: &T) -> Result<Term<'a>, Error>
     where
         T: Serialize,
     {
@@ -471,15 +471,5 @@ impl<'a> MapSerializer<'a> {
             self.ser.env,
             &vec![variant_term, struct_term],
         ))
-    }
-}
-
-mod tests {
-    use super::*;
-
-    fn int<'a>(ser: &'a Serializer<'a>, expected: Term<'a>) -> Result<(), Error> {
-        let actual = ser.to_term(&100)?;
-        assert_eq!(expected, actual);
-        Ok(())
     }
 }
