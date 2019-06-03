@@ -1,0 +1,5 @@
+[workspace]
+members = [
+  "serde_rustler",
+  "serde_rustler_tests/native/serde_rustler_tests"
+]

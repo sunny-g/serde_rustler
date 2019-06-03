@@ -1,10 +1,17 @@
 use super::{atoms, error::Error};
-use rustler::{types::tuple, Encoder, Env, Term};
-use serde::ser::{self, Serialize};
+use rustler::{
+    types::{atom::Atom, tuple},
+    Encoder, Env, Term,
+};
+use serde::{
+    ser::{self, Serialize},
+    serde_if_integer128,
+};
 
 /**
  *
  */
+#[derive(Clone, Copy)]
 pub struct Serializer<'a> {
     env: Env<'a>,
 }
@@ -15,16 +22,7 @@ impl<'a> From<Env<'a>> for Serializer<'a> {
     }
 }
 
-impl<'a> Serializer<'a> {
-    pub fn to_term<T>(&'a self, value: &T) -> Result<Term<'a>, Error>
-    where
-        T: Serialize,
-    {
-        value.serialize(self)
-    }
-}
-
-impl<'a> ser::Serializer for &'a Serializer<'a> {
+impl<'a> ser::Serializer for Serializer<'a> {
     type Ok = Term<'a>;
     type Error = Error;
 
@@ -40,14 +38,14 @@ impl<'a> ser::Serializer for &'a Serializer<'a> {
         Ok(v.encode(self.env))
     }
 
+    fn serialize_none(self) -> Result<Self::Ok, Self::Error> {
+        Ok(atoms::nil().encode(self.env))
+    }
     fn serialize_some<T>(self, value: &T) -> Result<Self::Ok, Self::Error>
     where
         T: ?Sized + ser::Serialize,
     {
         value.serialize(self)
-    }
-    fn serialize_none(self) -> Result<Self::Ok, Self::Error> {
-        self.serialize_unit()
     }
 
     fn serialize_i8(self, v: i8) -> Result<Self::Ok, Self::Error> {
@@ -59,7 +57,6 @@ impl<'a> ser::Serializer for &'a Serializer<'a> {
     fn serialize_i32(self, v: i32) -> Result<Self::Ok, Self::Error> {
         Ok(v.encode(self.env))
     }
-
     fn serialize_i64(self, v: i64) -> Result<Self::Ok, Self::Error> {
         Ok(v.encode(self.env))
     }
@@ -82,6 +79,17 @@ impl<'a> ser::Serializer for &'a Serializer<'a> {
         Ok(v.encode(self.env))
     }
 
+    // TODO: update rustler to support u128 and i128
+    serde_if_integer128! {
+        fn serialize_i128(self, v: i128) -> Result<Self::Ok, Self::Error> {
+            unimplemented!()
+        }
+
+        fn serialize_u128(self, v: u128) -> Result<Self::Ok, Self::Error> {
+            unimplemented!()
+        }
+    }
+
     fn serialize_char(self, v: char) -> Result<Self::Ok, Self::Error> {
         self.serialize_str(&v.to_string())
     }
@@ -96,12 +104,12 @@ impl<'a> ser::Serializer for &'a Serializer<'a> {
     }
 
     fn serialize_unit(self) -> Result<Self::Ok, Self::Error> {
-        Ok(atoms::nil().encode(self.env))
+        Ok(tuple::make_tuple(self.env, &[]))
     }
 
     /// Serializes `struct Unit` as `nil`.
     fn serialize_unit_struct(self, _name: &'static str) -> Result<Self::Ok, Self::Error> {
-        self.serialize_unit()
+        self.serialize_none()
     }
 
     /// Serializes `E::A` or `E::B` in `enum E { A, B }` as `:A` or `:B`.
@@ -111,24 +119,27 @@ impl<'a> ser::Serializer for &'a Serializer<'a> {
         _variant_index: u32,
         variant: &'static str,
     ) -> Result<Self::Ok, Self::Error> {
-        atoms::term_from_str(self.env, variant).map_err(|_| Error::InvalidVariant)
+        atoms::term_from_str(self.env, variant).map_err(|_| Error::InvalidVariantName)
     }
 
-    /// Serializes `struct Millimeters(u8)` as the raw `u8` value.
+    /// Serializes `struct Millimeters(u8)` as a tagged tuple: `{:Millimeters, u8}` or `{"Millimeters", u8}`, depending on if the atom `:Millimeters` has already been created.
     fn serialize_newtype_struct<T>(
         self,
-        _name: &'static str,
+        name: &'static str,
         value: &T,
     ) -> Result<Self::Ok, Self::Error>
     where
         T: ?Sized + ser::Serialize,
     {
-        value.serialize(self)
+        let name_term =
+            atoms::term_from_str(self.env, name).map_err(|_| Error::InvalidVariantName)?;
+        let mut ser = SequenceSerializer::new(self, Some(2), Some(name_term));
+        ser.add(value.serialize(self)?);
+        ser.to_tuple()
     }
 
-    /// Serializes `E::N` in `enum E { N(u8) }` as `{:N, u8}` or `{"N", u8}`, depending on if the atom `:N` has already been created.
-    /// Serializes `Result::Ok` of `enum Result { Ok(u8) }` into `{:ok, u8}`.
-    // TODO: ensure `Ok` maps to `:ok`, `Err` to `:error`
+    /// Serializes `E::N` in `enum E { N(u8) }` as a tagged tuple: `{:N, u8}` or `{"N", u8}`, depending on if the atom `:N` has already been created.
+    /// Serializes `Result::Ok` and `Result::Err` of `enum Result { Ok(u8), Err(_) }` into `{:ok, u8}` or `{:err, _}`.
     fn serialize_newtype_variant<T>(
         self,
         _name: &'static str,
@@ -139,34 +150,39 @@ impl<'a> ser::Serializer for &'a Serializer<'a> {
     where
         T: ?Sized + ser::Serialize,
     {
-        let mut tuple = SequenceSerializer::new(&self, Some(2), None);
-        let variant_term =
-            atoms::term_from_str(self.env, variant).map_err(|_| Error::InvalidVariant)?;
-        tuple.add(variant_term);
-        tuple.add(value.serialize(self)?);
-        tuple.to_tuple()
+        let variant_term = match variant.as_ref() {
+            "Ok" => atoms::ok().encode(self.env),
+            "Err" => atoms::error().encode(self.env),
+            _ => atoms::term_from_str(self.env, variant).map_err(|_| Error::InvalidVariantName)?,
+        };
+
+        let mut ser = SequenceSerializer::new(self, Some(2), Some(variant_term));
+        ser.add(value.serialize(self)?);
+        ser.to_tuple()
     }
 
     /// Serializes sequences as a Elixir lists.
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
-        Ok(SequenceSerializer::new(&self, len, None))
+        Ok(SequenceSerializer::new(self, len, None))
     }
 
     /// Serializes tuples as Elixir tuples.
     fn serialize_tuple(self, len: usize) -> Result<Self::SerializeTuple, Self::Error> {
-        Ok(SequenceSerializer::new(&self, Some(len), None))
+        Ok(SequenceSerializer::new(self, Some(len), None))
     }
 
-    /// Serializes `struct Rgb(u8, u8, u8)` as `{u8, u8, u8}`.
+    /// Serializes `struct Rgb(u8, u8, u8)` as an Elixir Record or Record-like tuple: `{:Rgb, u8, u8, u8}` or `{"Rgb", u8, u8, u8}`.
     fn serialize_tuple_struct(
         self,
-        _name: &'static str,
+        name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeTupleStruct, Self::Error> {
-        self.serialize_tuple(len)
+        let name_term =
+            atoms::term_from_str(self.env, name).map_err(|_| Error::InvalidVariantName)?;
+        Ok(SequenceSerializer::new(self, Some(len), Some(name_term)))
     }
 
-    /// Serializes `E::T` of `enum E { T(u8, u8) }` as `{:T, {u8, u8}} or {"T", {u8, u8}}`, depending on if the atom `:T` has already been created.
+    /// Serializes `E::T` of `enum E { T(u8, u8) }` as an Elixir Record or Record-like tuple: `{:T, u8, u8}` or `{"T", u8, u8}`.
     fn serialize_tuple_variant(
         self,
         _name: &'static str,
@@ -174,21 +190,15 @@ impl<'a> ser::Serializer for &'a Serializer<'a> {
         variant: &'static str,
         len: usize,
     ) -> Result<Self::SerializeTupleVariant, Self::Error> {
-        let variant_term =
-            atoms::term_from_str(self.env, variant).map_err(|_| Error::InvalidVariant)?;
-        Ok(SequenceSerializer::new(
-            &self,
-            Some(len),
-            Some(variant_term),
-        ))
+        self.serialize_tuple_struct(variant, len)
     }
 
-    /// Serializes map as Elixir map.
+    /// Serializes map as Elixir map. Keys will not serialize into atoms.
     fn serialize_map(self, len: Option<usize>) -> Result<Self::SerializeMap, Self::Error> {
-        Ok(MapSerializer::new(self, len, None, None))
+        Ok(MapSerializer::new(self, len, None))
     }
 
-    // Serializes as map, but attempts to include %{:__struct__ => :STRUCT_NAME}, if the atom `:STRUCT_NAME` has already been created.
+    /// Serializes as map, but attempts to include `%{:__struct__ => :STRUCT_NAME}` or `${:__struct__ => "STRUCT_NAME"}`, if the atom `:STRUCT_NAME` has not already been created, as well as attempting to serialize keys as atoms.
     fn serialize_struct(
         self,
         name: &'static str,
@@ -196,28 +206,18 @@ impl<'a> ser::Serializer for &'a Serializer<'a> {
     ) -> Result<Self::SerializeStruct, Self::Error> {
         let name_term =
             atoms::term_from_str(self.env, name).map_err(|_| Error::InvalidStructName)?;
-        Ok(MapSerializer::new(self, Some(len), Some(name_term), None))
+        Ok(MapSerializer::new(self, Some(len), Some(name_term)))
     }
 
-    // Serializes `E::S` of `enum E { S { r: u8, g: u8, b: u8 } }` into `{:E, %S{...}}`, attempting to replace `E` and `S` with `:E` and `:S` if the atoms have already been created.
-    // TODO: above is incorrect, fix it
+    /// Serializes as we serialize a struct: `E::S` of `enum E { S { r: u8, g: u8, b: u8 } }` is a map including `%{:__struct__ => :S}` or `${:__struct__ => "S"}`.
     fn serialize_struct_variant(
         self,
-        name: &'static str,
+        _name: &'static str,
         _variant_index: u32,
         variant: &'static str,
         len: usize,
     ) -> Result<Self::SerializeStructVariant, Self::Error> {
-        let name_term =
-            atoms::term_from_str(self.env, name).map_err(|_| Error::InvalidStructName)?;
-        let variant_term =
-            atoms::term_from_str(self.env, variant).map_err(|_| Error::InvalidVariant)?;
-        Ok(MapSerializer::new(
-            self,
-            Some(len),
-            Some(name_term),
-            Some(variant_term),
-        ))
+        self.serialize_struct(variant, len)
     }
 }
 
@@ -263,12 +263,11 @@ impl<'a> ser::SerializeTupleStruct for SequenceSerializer<'a> {
     where
         T: ?Sized + Serialize,
     {
-        self.add(value.serialize(self.ser)?);
-        Ok(())
+        ser::SerializeTuple::serialize_element(self, value)
     }
 
     fn end(self) -> Result<Term<'a>, Error> {
-        self.to_tuple()
+        ser::SerializeTuple::end(self)
     }
 }
 
@@ -280,12 +279,11 @@ impl<'a> ser::SerializeTupleVariant for SequenceSerializer<'a> {
     where
         T: ?Sized + Serialize,
     {
-        self.add(value.serialize(self.ser)?);
-        Ok(())
+        ser::SerializeTuple::serialize_element(self, value)
     }
 
     fn end(self) -> Result<Term<'a>, Error> {
-        self.to_tuple_variant()
+        ser::SerializeTuple::end(self)
     }
 }
 
@@ -330,7 +328,9 @@ impl<'a> ser::SerializeStruct for MapSerializer<'a> {
     where
         T: ?Sized + Serialize,
     {
-        self.add_key(key.serialize(self.ser)?);
+        let key_term =
+            atoms::term_from_str(self.ser.env, key).map_err(|_| Error::InvalidStructKey)?;
+        self.add_key(key_term);
         self.add_val(value.serialize(self.ser)?);
         Ok(())
     }
@@ -348,13 +348,11 @@ impl<'a> ser::SerializeStructVariant for MapSerializer<'a> {
     where
         T: ?Sized + Serialize,
     {
-        self.add_key(key.serialize(self.ser)?);
-        self.add_val(value.serialize(self.ser)?);
-        Ok(())
+        ser::SerializeStruct::serialize_field(self, key, value)
     }
 
     fn end(self) -> Result<Term<'a>, Error> {
-        self.to_struct_variant()
+        ser::SerializeStruct::end(self)
     }
 }
 
@@ -362,24 +360,21 @@ impl<'a> ser::SerializeStructVariant for MapSerializer<'a> {
  *
  */
 pub struct SequenceSerializer<'a> {
-    ser: &'a Serializer<'a>,
-    variant: Option<Term<'a>>,
+    ser: Serializer<'a>,
     items: Vec<Term<'a>>,
 }
 impl<'a> SequenceSerializer<'a> {
-    fn new(ser: &'a Serializer<'a>, len: Option<usize>, variant: Option<Term<'a>>) -> Self {
-        match len {
-            None => SequenceSerializer {
-                ser,
-                variant,
-                items: Vec::new(),
-            },
-            Some(length) => SequenceSerializer {
-                ser,
-                variant,
-                items: Vec::with_capacity(length),
-            },
+    fn new(ser: Serializer<'a>, len: Option<usize>, name: Option<Term<'a>>) -> Self {
+        let mut items = match len {
+            None => Vec::new(),
+            Some(length) => Vec::with_capacity(length),
+        };
+
+        if let Some(name_term) = name {
+            items.push(name_term);
         }
+
+        SequenceSerializer { ser, items }
     }
 
     fn add(&mut self, term: Term<'a>) -> () {
@@ -393,46 +388,29 @@ impl<'a> SequenceSerializer<'a> {
     fn to_tuple(&self) -> Result<Term<'a>, Error> {
         Ok(tuple::make_tuple(self.ser.env, &self.items))
     }
-
-    fn to_tuple_variant(&self) -> Result<Term<'a>, Error> {
-        let variant_term = self.variant.ok_or(Error::InvalidVariant)?;
-        let tuple_term = self.to_tuple()?;
-        Ok(tuple::make_tuple(
-            self.ser.env,
-            &vec![variant_term, tuple_term],
-        ))
-    }
 }
 
 /**
  *
  */
 pub struct MapSerializer<'a> {
-    ser: &'a Serializer<'a>,
+    ser: Serializer<'a>,
     name: Option<Term<'a>>,
-    variant: Option<Term<'a>>,
     keys: Vec<Term<'a>>,
     values: Vec<Term<'a>>,
 }
 impl<'a> MapSerializer<'a> {
-    fn new(
-        ser: &'a Serializer<'a>,
-        len: Option<usize>,
-        name: Option<Term<'a>>,
-        variant: Option<Term<'a>>,
-    ) -> Self {
+    fn new(ser: Serializer<'a>, len: Option<usize>, name: Option<Term<'a>>) -> Self {
         match len {
             None => MapSerializer {
                 ser,
                 name,
-                variant,
                 keys: Vec::new(),
                 values: Vec::new(),
             },
             Some(length) => MapSerializer {
                 ser,
                 name,
-                variant,
                 keys: Vec::with_capacity(length),
                 values: Vec::with_capacity(length),
             },
@@ -455,21 +433,11 @@ impl<'a> MapSerializer<'a> {
     }
 
     fn to_struct(&self) -> Result<Term<'a>, Error> {
-        let module_term = self.name.ok_or(Error::InvalidStructName)?;
         let struct_atom = atoms::__struct__().to_term(self.ser.env);
+        let module_term = self.name.ok_or(Error::InvalidStructName)?;
         self.to_map()
             .map_err(|_| Error::InvalidStruct)?
             .map_put(struct_atom, module_term)
             .map_err(|_| Error::InvalidStruct)
-    }
-
-    // TODO: support :__struct__ and atom key? is name/variant correct?
-    fn to_struct_variant(&self) -> Result<Term<'a>, Error> {
-        let variant_term = self.variant.ok_or(Error::InvalidVariant)?;
-        let struct_term = self.to_struct()?;
-        Ok(tuple::make_tuple(
-            self.ser.env,
-            &vec![variant_term, struct_term],
-        ))
     }
 }

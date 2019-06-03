@@ -37,6 +37,7 @@ impl<'a> Deserializer<'a> {
         Ok(binary.as_slice())
     }
 
+    // TODO: test if Binary?
     fn parse_string<T: Decoder<'a>>(&self) -> Result<T, Error> {
         self.term.decode().map_err(|_| Error::InvalidString)
     }
@@ -71,14 +72,21 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
 
     }
 
+    fn deserialize_unit<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        if atoms::nil().eq(&self.term) {
+            visitor.visit_unit()
+        } else {
+            Err(Error::ExpectedNil)
+        }
+    }
+
     fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        if !self.term.is_atom() {
-            return Err(Error::ExpectedBoolean);
-        }
-
         if atoms::true_().eq(&self.term) {
             visitor.visit_bool(true)
         } else if atoms::false_().eq(&self.term) {
@@ -181,6 +189,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         match self.parse_string() {
             Err(_) => Err(Error::ExpectedChar),
             res => {
+                // TODO: char vs string?
                 let string: String = res.unwrap();
                 if string.len() == 1 {
                     visitor.visit_char(string.chars().next().unwrap())
@@ -219,21 +228,6 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         V: Visitor<'de>,
     {
         visitor.visit_bytes(self.parse_binary()?)
-    }
-
-    fn deserialize_unit<V>(self, visitor: V) -> Result<V::Value, Self::Error>
-    where
-        V: Visitor<'de>,
-    {
-        if !self.term.is_atom() {
-            return Err(Error::ExpectedNil);
-        }
-
-        if atoms::nil().eq(&self.term) {
-            visitor.visit_unit()
-        } else {
-            Err(Error::ExpectedNil)
-        }
     }
 
     fn deserialize_unit_struct<V>(

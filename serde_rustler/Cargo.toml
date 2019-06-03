@@ -20,4 +20,4 @@ serde-transcode = "1.1.0"
 [lib]
 name = "serde_rustler"
 path = "src/lib.rs"
-crate-type = ["dylib"]
+crate-type = ["rlib"]

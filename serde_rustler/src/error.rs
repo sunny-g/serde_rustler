@@ -1,6 +1,13 @@
+use crate::atoms;
 use quick_error::quick_error;
+use rustler::{types::tuple, Encoder, Env, Term};
 use serde::{de, ser};
 use std::fmt::Display;
+
+pub fn error_tuple<'a>(env: Env<'a>, reason_term: Term<'a>) -> Term<'a> {
+    let err_term = atoms::error().encode(env);
+    tuple::make_tuple(env, &vec![err_term, reason_term])
+}
 
 quick_error! {
     #[derive(Debug)]
@@ -60,7 +67,7 @@ quick_error! {
         SerializationError(err: String) {
             description(err)
         }
-        InvalidVariant {
+        InvalidVariantName {
             description("Failed to serialize variant to atom or string")
         }
         InvalidStructName {
@@ -71,6 +78,9 @@ quick_error! {
         }
         InvalidStruct {
             description("Failed to serialize struct to NIF struct")
+        }
+        InvalidStructKey {
+            description("Failed to serialized struct key")
         }
     }
 }
