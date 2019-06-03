@@ -1,0 +1,18 @@
+[package]
+name = "serde_rustler_tests"
+version = "0.1.0"
+authors = []
+edition = "2018"
+
+[lib]
+name = "serde_rustler_tests"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+lazy_static = "1.0"
+rustler = "0.20.0"
+rustler_codegen = "0.20.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_eetf = "0.2"
+serde_rustler = { path = "../../../serde_rustler" }

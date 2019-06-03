@@ -1,7 +1,7 @@
-defmodule SerdeRustler.Mixfile do
+defmodule SerdeRustlerTests.Mixfile do
   use Mix.Project
 
-  @name         :serde_rustler
+  @name         :serde_rustler_tests
   @version      "0.0.1-dev"
   @description  """
   """
@@ -30,12 +30,7 @@ defmodule SerdeRustler.Mixfile do
       build_embedded:     in_production,
       start_permanent:    in_production,
       compilers:          [:rustler] ++ Mix.compilers(),
-      rustler_crates:     [serde_rustler: [
-        path:             __DIR__ <> "/../../rust/serde_rustler",
-        mode:             (if Mix.env() == :prod, do: :release, else: :debug),
-        default_features: true,
-        features:         [],
-      ]],
+      rustler_crates:     rustler_crates(),
     ]
   end
 
@@ -51,6 +46,16 @@ defmodule SerdeRustler.Mixfile do
       {:ex_doc,         "~> 0.19",  only: [:dev],        runtime: false},
       {:inch_ex, github: "rrrene/inch_ex", only: [:dev, :test], runtime: false},
       {:mix_test_watch, "~> 0.8",   only: [:dev],        runtime: false},
+    ]
+  end
+
+  defp rustler_crates do
+    [ serde_rustler_tests:
+      [ path:             __DIR__ <> "/native/serde_rustler_tests",
+        mode:             (if Mix.env() == :prod, do: :release, else: :debug),
+        # default_features: true,
+        # features:         [],
+      ]
     ]
   end
 
