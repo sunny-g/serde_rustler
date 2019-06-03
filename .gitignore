@@ -1,0 +1,6 @@
+.vscode
+.elixir_ls
+*.dump
+_build/
+deps/
+target/
