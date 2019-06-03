@@ -193,12 +193,12 @@ impl<'a> ser::Serializer for Serializer<'a> {
         self.serialize_tuple_struct(variant, len)
     }
 
-    /// Serializes map as Elixir map. Keys will not serialize into atoms.
+    /// Serializes map as Elixir map. Keys *will not* serialize into atoms.
     fn serialize_map(self, len: Option<usize>) -> Result<Self::SerializeMap, Self::Error> {
         Ok(MapSerializer::new(self, len, None))
     }
 
-    /// Serializes as map, but attempts to include `%{:__struct__ => :STRUCT_NAME}` or `${:__struct__ => "STRUCT_NAME"}`, if the atom `:STRUCT_NAME` has not already been created, as well as attempting to serialize keys as atoms.
+    /// Serializes as map, but attempts to include `%{:__struct__ => :STRUCT_NAME}` or `${:__struct__ => "STRUCT_NAME"}`, if the atom `:STRUCT_NAME` has not already been created, and will also attempt to serialize keys as atoms.
     fn serialize_struct(
         self,
         name: &'static str,
@@ -209,7 +209,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         Ok(MapSerializer::new(self, Some(len), Some(name_term)))
     }
 
-    /// Serializes as we serialize a struct: `E::S` of `enum E { S { r: u8, g: u8, b: u8 } }` is a map including `%{:__struct__ => :S}` or `${:__struct__ => "S"}`.
+    /// Serializes the same as we serialize a struct: `E::S` of `enum E { S { r: u8, g: u8, b: u8 } }` is a map including `%{:__struct__ => :S}` or `${:__struct__ => "S"}`.
     fn serialize_struct_variant(
         self,
         _name: &'static str,
@@ -426,10 +426,7 @@ impl<'a> MapSerializer<'a> {
     }
 
     fn to_map(&self) -> Result<Term<'a>, Error> {
-        match Term::map_from_arrays(self.ser.env, &self.keys, &self.values) {
-            Err(_reason) => Err(Error::InvalidMap),
-            Ok(term) => Ok(term),
-        }
+        Term::map_from_arrays(self.ser.env, &self.keys, &self.values).map_err(|_| Error::InvalidMap)
     }
 
     fn to_struct(&self) -> Result<Term<'a>, Error> {

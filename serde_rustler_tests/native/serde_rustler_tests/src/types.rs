@@ -14,21 +14,26 @@ pub enum NewtypeVariant {
 }
 
 #[derive(Serialize)]
-pub struct Millimeters(u8);
+pub struct NewtypeStruct(u8);
 
-impl Millimeters {
+impl NewtypeStruct {
     pub fn new(mm: u8) -> Self {
-        Millimeters(mm)
+        NewtypeStruct(mm)
     }
 }
 
 #[derive(Serialize)]
-pub struct Rgb(u8, u8, u8);
+pub struct TupleStruct(u8, u8, u8);
 
-impl Rgb {
+impl TupleStruct {
     pub fn new(r: u8, g: u8, b: u8) -> Self {
-        Rgb(r, g, b)
+        TupleStruct(r, g, b)
     }
+}
+
+#[derive(Serialize)]
+pub enum TupleVariant {
+    T(u8, u8)
 }
 
 #[derive(Serialize)]

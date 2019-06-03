@@ -1,4 +1,4 @@
-use crate::types::{Millimeters, NewtypeVariant, Rgb, Struct, StructVariant, Unit, UnitVariant};
+use crate::types::{NewtypeStruct, NewtypeVariant, Struct, StructVariant, TupleStruct, TupleVariant, Unit, UnitVariant};
 use rustler::{Encoder, Env, NifResult, Term};
 use serde::Serialize;
 use serde_rustler::{atoms, error::error_tuple, ser::Serializer};
@@ -48,7 +48,7 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         "unit variant" => run_test(UnitVariant::A, env, expected_term),
 
         // Newtype Types
-        "newtype struct" => run_test(Millimeters::new(u8::max_value()), env, expected_term),
+        "newtype struct" => run_test(NewtypeStruct::new(u8::max_value()), env, expected_term),
         "newtype variant" => run_test(NewtypeVariant::N(u8::max_value()), env, expected_term),
         "newtype variant (ok)" => {
             let ok: Result<u8, String> = Result::Ok(u8::max_value());
@@ -62,18 +62,19 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         // Sequences
         "sequences (primitive)" => run_test(vec!["hello", "world"], env, expected_term),
         "sequences (complex)" => {
-            let a = Millimeters::new(u8::min_value());
-            let b = Millimeters::new(u8::max_value());
+            let a = NewtypeStruct::new(u8::min_value());
+            let b = NewtypeStruct::new(u8::max_value());
             run_test(vec![a, b], env, expected_term)
         }
 
         // Tuple Types
         "tuple (empty)" => run_test((), env, expected_term),
         "tuple" => run_test((0, 255), env, expected_term),
-        "tuple struct" => run_test(Rgb::new(0, 128, 255), env, expected_term),
+        "tuple struct" => run_test(TupleStruct::new(0, 128, 255), env, expected_term),
+        "tuple variant" => run_test(TupleVariant::T(0, 255), env, expected_term),
 
         // Map and Struct Types
-        "map (simple)" => {
+        "map (primitive)" => {
             let mut map = HashMap::new();
             map.insert("key", "hello");
             map.insert("val", "world");
@@ -97,7 +98,7 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
             env,
             expected_term,
         ),
-        _ => Ok(error_tuple(env, "nonexistant_test".encode(env))),
+        _ => Ok(error_tuple(env, "nonexistant test".encode(env))),
     }
 }
 
