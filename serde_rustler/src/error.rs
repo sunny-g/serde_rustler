@@ -42,6 +42,9 @@ quick_error! {
         ExpectedBoolean {
             description("Expected to deserialize boolean")
         }
+        ExpectedBinary {
+            description("Expected to deserialize binary")
+        }
         ExpectedNumber {
             description("Expected to deserialize number")
         }
@@ -63,6 +66,9 @@ quick_error! {
         ExpectedStruct {
             description("Expected to deserialize struct")
         }
+        ExpectedStructValue {
+            description("Expected to deserialize struct value")
+        }
 
         SerializationError(err: String) {
             description(err)
@@ -80,7 +86,7 @@ quick_error! {
             description("Failed to serialize struct to NIF struct")
         }
         InvalidStructKey {
-            description("Failed to serialized struct key")
+            description("Failed to serialize struct key")
         }
     }
 }

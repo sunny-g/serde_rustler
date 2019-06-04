@@ -11,6 +11,6 @@ extern crate rustler;
 extern crate rustler_codegen;
 
 pub mod atoms;
-// pub mod de;
+pub mod de;
 pub mod error;
 pub mod ser;
