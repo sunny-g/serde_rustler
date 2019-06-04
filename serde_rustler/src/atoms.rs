@@ -18,7 +18,7 @@ pub fn term_from_bytes<'a>(env: Env<'a>, bytes: &[u8]) -> Result<Term<'a>, Error
     match Atom::try_from_bytes(env, bytes) {
         Ok(Some(term)) => Ok(term.encode(env)),
         Ok(None) => {
-            let string = from_utf8(bytes).map_err(|_| Error::InvalidUTF8Bytes)?;
+            let string = from_utf8(bytes).or(Err(Error::InvalidUTF8Bytes))?;
             Ok(string.encode(env))
         }
         _ => Err(Error::InvalidAtomBytes),
@@ -30,7 +30,7 @@ pub fn term_from_bytes<'a>(env: Env<'a>, bytes: &[u8]) -> Result<Term<'a>, Error
  */
 // TODO: ensure `Ok` maps to `:ok`, `Err` to `:error`
 pub fn term_from_str<'a>(env: Env<'a>, string: &str) -> Result<Term<'a>, Error> {
-    term_from_bytes(env, string.as_bytes()).map_err(|_| Error::InvalidUTF8String)
+    term_from_bytes(env, string.as_bytes()).or(Err(Error::InvalidUTF8String))
 }
 
 quick_error! {

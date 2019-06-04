@@ -66,6 +66,9 @@ quick_error! {
         ExpectedStruct {
             description("Expected to deserialize struct")
         }
+        ExpectedStructName {
+            description("Expected to deserialize struct name")
+        }
         ExpectedStructValue {
             description("Expected to deserialize struct value")
         }
