@@ -37,6 +37,7 @@ pub enum TupleVariant {
 }
 
 #[derive(Serialize)]
+#[serde(rename = "Elixir.SerdeRustlerTests.SerTest.Struct")]
 pub struct Struct {
     r: u8,
     g: u8,
@@ -51,5 +52,6 @@ impl Struct {
 
 #[derive(Serialize)]
 pub enum StructVariant {
+    #[serde(rename = "Elixir.SerdeRustlerTests.SerTest.S")]
     S { r: u8, g: u8, b: u8 },
 }
