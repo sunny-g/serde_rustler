@@ -15,8 +15,8 @@ mod types;
 
 rustler_export_nifs! {
     "Elixir.SerdeRustlerTests",
-    [   ("serialize", 2, ser::test),
-        // ("deserialize", 2, de::test)
+    [   ("run_ser_test", 2, ser::test),
+        // ("run_de_test", 2, de::test)
     ],
     None
 }

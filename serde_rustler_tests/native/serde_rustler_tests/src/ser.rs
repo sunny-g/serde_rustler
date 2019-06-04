@@ -1,4 +1,7 @@
-use crate::types::{NewtypeStruct, NewtypeVariant, Struct, StructVariant, TupleStruct, TupleVariant, Unit, UnitVariant};
+use crate::types::{
+    NewtypeStruct, NewtypeVariant, Struct, StructVariant, TupleStruct, TupleVariant, Unit,
+    UnitVariant,
+};
 use rustler::{Encoder, Env, NifResult, Term};
 use serde::Serialize;
 use serde_rustler::{atoms, error::error_tuple, ser::Serializer};
@@ -43,7 +46,7 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         "bytes" => run_test(&[3, 2, 1, 0], env, expected_term),
 
         // Unit Types
-        "unit" => run_test(None as Option<()>, env, expected_term),
+        "unit" => run_test((), env, expected_term),
         "unit struct" => run_test(Unit {}, env, expected_term),
         "unit variant" => run_test(UnitVariant::A, env, expected_term),
 
@@ -68,7 +71,7 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         }
 
         // Tuple Types
-        "tuple (empty)" => run_test((), env, expected_term),
+        "tuple (empty)" => run_test((), env, expected_term), // same as unit
         "tuple" => run_test((0, 255), env, expected_term),
         "tuple struct" => run_test(TupleStruct::new(0, 128, 255), env, expected_term),
         "tuple variant" => run_test(TupleVariant::T(0, 255), env, expected_term),

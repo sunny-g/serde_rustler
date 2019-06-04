@@ -1,8 +1,5 @@
 use super::{atoms, error::Error};
-use rustler::{
-    types::{atom::Atom, tuple},
-    Encoder, Env, Term,
-};
+use rustler::{types::tuple, Encoder, Env, Term};
 use serde::{
     ser::{self, Serialize},
     serde_if_integer128,
@@ -104,7 +101,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
     }
 
     fn serialize_unit(self) -> Result<Self::Ok, Self::Error> {
-        Ok(tuple::make_tuple(self.env, &[]))
+        self.serialize_none()
     }
 
     /// Serializes `struct Unit` as `nil`.

@@ -33,7 +33,7 @@ impl TupleStruct {
 
 #[derive(Serialize)]
 pub enum TupleVariant {
-    T(u8, u8)
+    T(u8, u8),
 }
 
 #[derive(Serialize)]
