@@ -1,19 +1,19 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize)]
+#[derive(Eq, PartialEq, Serialize, Deserialize)]
 pub struct Unit;
 
-#[derive(Serialize)]
+#[derive(Eq, PartialEq, Serialize, Deserialize)]
 pub enum UnitVariant {
     A,
 }
 
-#[derive(Serialize)]
+#[derive(Eq, PartialEq, Serialize, Deserialize)]
 pub enum NewtypeVariant {
     N(u8),
 }
 
-#[derive(Serialize)]
+#[derive(Eq, PartialEq, Serialize, Deserialize)]
 pub struct NewtypeStruct(u8);
 
 impl NewtypeStruct {
@@ -22,7 +22,7 @@ impl NewtypeStruct {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Eq, PartialEq, Serialize, Deserialize)]
 pub struct TupleStruct(u8, u8, u8);
 
 impl TupleStruct {
@@ -31,13 +31,13 @@ impl TupleStruct {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Eq, PartialEq, Serialize, Deserialize)]
 pub enum TupleVariant {
     T(u8, u8),
 }
 
-#[derive(Serialize)]
-#[serde(rename = "Elixir.SerdeRustlerTests.SerTest.Struct")]
+#[derive(Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename = "Elixir.SerdeRustlerTests.NifTest.Struct")]
 pub struct Struct {
     r: u8,
     g: u8,
@@ -50,8 +50,8 @@ impl Struct {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Eq, PartialEq, Serialize, Deserialize)]
 pub enum StructVariant {
-    #[serde(rename = "Elixir.SerdeRustlerTests.SerTest.S")]
+    #[serde(rename = "Elixir.SerdeRustlerTests.NifTest.S")]
     S { r: u8, g: u8, b: u8 },
 }
