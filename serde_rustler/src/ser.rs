@@ -117,7 +117,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         _variant_index: u32,
         variant: &'static str,
     ) -> Result<Self::Ok, Self::Error> {
-        atoms::term_from_str(self.env, variant).or(Err(Error::InvalidVariantName))
+        atoms::str_to_term(self.env, variant).or(Err(Error::InvalidVariantName))
     }
 
     /// Serializes `struct Millimeters(u8)` as a tagged tuple: `{:Millimeters, u8}` or `{"Millimeters", u8}`, depending on if the atom `:Millimeters` has already been created.
@@ -129,7 +129,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
     where
         T: ?Sized + ser::Serialize,
     {
-        let name_term = atoms::term_from_str(self.env, name).or(Err(Error::InvalidVariantName))?;
+        let name_term = atoms::str_to_term(self.env, name).or(Err(Error::InvalidVariantName))?;
         let mut ser = SequenceSerializer::new(self, Some(2), Some(name_term));
         ser.add(value.serialize(self)?);
         ser.to_tuple()
@@ -170,7 +170,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeTupleStruct, Self::Error> {
-        let name_term = atoms::term_from_str(self.env, name).or(Err(Error::InvalidVariantName))?;
+        let name_term = atoms::str_to_term(self.env, name).or(Err(Error::InvalidVariantName))?;
         Ok(SequenceSerializer::new(self, Some(len), Some(name_term)))
     }
 
@@ -196,7 +196,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeStruct, Self::Error> {
-        let name_term = atoms::term_from_str(self.env, name).or(Err(Error::InvalidStructName))?;
+        let name_term = atoms::str_to_term(self.env, name).or(Err(Error::InvalidStructName))?;
         Ok(MapSerializer::new(self, Some(len), Some(name_term)))
     }
 
@@ -319,7 +319,7 @@ impl<'a> ser::SerializeStruct for MapSerializer<'a> {
     where
         T: ?Sized + Serialize,
     {
-        let key_term = atoms::term_from_str(self.ser.env, key).or(Err(Error::InvalidStructKey))?;
+        let key_term = atoms::str_to_term(self.ser.env, key).or(Err(Error::InvalidStructKey))?;
         self.add_key(key_term);
         self.add_val(value.serialize(self.ser)?);
         Ok(())

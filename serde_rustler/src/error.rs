@@ -18,14 +18,17 @@ quick_error! {
         TypeHintsRequired {
             description("Cannot deserialize any, type hints are required")
         }
+        InvalidAtom {
+            description("Failed to deserialize atom")
+        }
         InvalidBoolean {
             description("Failed to deserialize boolean")
         }
         InvalidNumber {
             description("Failed to deserialize number")
         }
-        InvalidString {
-            description("Failed to deserialize string")
+        InvalidStringable {
+            description("Failed to deserialize term as an &str")
         }
         InvalidBinary {
             description("Failed to deserialize binary")
@@ -35,6 +38,9 @@ quick_error! {
         }
         InvalidTuple {
             description("Failed to deserialize tuple")
+        }
+        InvalidSequenceElement {
+            description("Failed to deserialize sequence element")
         }
         ExpectedAtom {
             description("Expected to deserialize atom")
@@ -60,6 +66,12 @@ quick_error! {
         ExpectedTuple {
             description("Expected to deserialize tuple")
         }
+        ExpectedNewtypeStruct {
+            description("Expected to deserialize newtype struct tuple")
+        }
+        ExpectedEnum {
+            description("Expected to deserialize enum")
+        }
         ExpectedMap {
             description("Expected to deserialize map")
         }
@@ -71,6 +83,18 @@ quick_error! {
         }
         ExpectedStructValue {
             description("Expected to deserialize struct value")
+        }
+        ExpectedUnitVariant {
+            description("Expected to deserialize unit variant")
+        }
+        ExpectedNewtypeVariant {
+            description("Expected to deserialize newtype variant")
+        }
+        ExpectedTupleVariant {
+            description("Expected to deserialize tuple variant")
+        }
+        ExpectedStructVariant {
+            description("Expected to deserialize struct variant")
         }
 
         SerializationError(err: String) {
@@ -95,14 +119,14 @@ quick_error! {
 }
 
 impl ser::Error for Error {
-    // #[cold]
+    #[cold]
     fn custom<T: Display>(msg: T) -> Error {
         Error::SerializationError(msg.to_string())
     }
 }
 
 impl de::Error for Error {
-    // #[cold]
+    #[cold]
     fn custom<T: Display>(msg: T) -> Error {
         Error::DeserializationError(msg.to_string())
     }

@@ -1,7 +1,7 @@
 //!
 //!
 
-#![recursion_limit = "100"]
+#![recursion_limit = "196"]
 
 #[macro_use]
 extern crate lazy_static;
@@ -14,3 +14,4 @@ pub mod atoms;
 pub mod de;
 pub mod error;
 pub mod ser;
+mod util;
