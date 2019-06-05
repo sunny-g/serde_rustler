@@ -29,7 +29,7 @@ blocks:
           # job is to work with your code.
           - checkout
 
-          - bin/setup_ci_elixir
+          # - bin/setup_ci_elixir
           - sem-version elixir 1.8.1
 
           # Restore dependencies from cache, command won't fail if it's
@@ -56,7 +56,7 @@ blocks:
       prologue:
         commands:
         - checkout
-        - bin/setup_ci_elixir
+        # - bin/setup_ci_elixir
         - sem-version elixir 1.8.1
         - cache restore mix-deps-$SEMAPHORE_GIT_BRANCH-$(checksum mix.lock)
         - cache restore mix-build-$SEMAPHORE_GIT_BRANCH-$(checksum mix.lock)
@@ -75,7 +75,7 @@ blocks:
       prologue:
         commands:
         - checkout
-        - bin/setup_ci_elixir
+        # - bin/setup_ci_elixir
         - sem-version elixir 1.8.1
         - cache restore mix-deps-$SEMAPHORE_GIT_BRANCH-$(checksum mix.lock)
         - cache restore mix-build-$SEMAPHORE_GIT_BRANCH-$(checksum mix.lock)
