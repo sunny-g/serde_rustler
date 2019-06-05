@@ -1,4 +1,4 @@
-use crate::{atoms, error::Error};
+use crate::{atoms, error::Error, util};
 use rustler::{types::tuple, Encoder, Env, Term};
 use serde::{
     ser::{self, Serialize},
@@ -92,7 +92,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
     }
 
     fn serialize_str(self, v: &str) -> Result<Self::Ok, Self::Error> {
-        Ok(v.encode(self.env))
+        util::str_to_term(self.env, v)
     }
 
     // TODO

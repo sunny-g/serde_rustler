@@ -2,11 +2,11 @@ defmodule SerdeRustlerTests.Mixfile do
   use Mix.Project
 
   @name         :serde_rustler_tests
-  @version      "0.0.1-dev"
+  @version      "0.0.1"
   @description  """
   """
   @github       "https://github.com/datalove-app/serde_rustler"
-  @files        ["mix.exs", "mix.lock", "lib", "test", "README.md"]
+  @files        ["mix.exs", "mix.lock", "lib", "native", "test", "README.md"]
   @maintainers  ["Sunny G"]
   @licenses     ["MIT"]
 
@@ -53,8 +53,8 @@ defmodule SerdeRustlerTests.Mixfile do
     [ serde_rustler_tests:
       [ path:             __DIR__ <> "/native/serde_rustler_tests",
         mode:             (if Mix.env() == :prod, do: :release, else: :debug),
-        # default_features: true,
-        # features:         [],
+        default_features: true,
+        features:         [],
       ]
     ]
   end

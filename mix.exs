@@ -4,10 +4,10 @@ defmodule SerdeRustler.Mixfile do
   use Mix.Project
 
   @name         :serde_rustler
-  @version      "0.0.1-dev"
+  @version      "0.0.1"
   @description  """
   """
-  @github       "https://github.com/datalove-app/serde_rustler"
+  @github       "https://github.com/sunny-g/serde_rustler"
   @files        ["mix.exs", "mix.lock", "lib", "test", "README.md"]
   @maintainers  ["Sunny G"]
   @licenses     ["MIT"]
