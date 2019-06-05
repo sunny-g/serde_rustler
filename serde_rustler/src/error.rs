@@ -4,11 +4,6 @@ use rustler::{types::tuple, Encoder, Env, Term};
 use serde::{de, ser};
 use std::fmt::Display;
 
-pub fn error_tuple<'a>(env: Env<'a>, reason_term: Term<'a>) -> Term<'a> {
-    let err_term = atoms::error().encode(env);
-    tuple::make_tuple(env, &vec![err_term, reason_term])
-}
-
 quick_error! {
     #[derive(Debug)]
     pub enum Error {

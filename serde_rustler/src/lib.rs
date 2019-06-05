@@ -10,7 +10,10 @@ extern crate rustler;
 extern crate rustler_codegen;
 
 pub mod atoms;
-pub mod de;
+mod de;
 pub mod error;
-pub mod ser;
-mod util;
+mod ser;
+pub mod util;
+
+pub use de::Deserializer;
+pub use ser::Serializer;

@@ -1,5 +1,6 @@
+//! Library implementing tests to be called from ExUnit.
 //!
-//!
+//! See `run_ser_test` and `run_de_test` for details about how to use `serde_rustler::Serializer` and `serde_rustler::Deserializer`.
 
 #[macro_use]
 extern crate rustler;
@@ -18,7 +19,7 @@ use crate::types::{
 };
 use rustler::{Encoder, Env, NifResult, Term};
 use serde::{Deserialize, Serialize};
-use serde_rustler::{atoms, de::Deserializer, error::error_tuple, ser::Serializer};
+use serde_rustler::{atoms, util::error_tuple, Deserializer, Serializer};
 use std::{collections::HashMap, error::Error as StdError};
 
 pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
@@ -133,7 +134,7 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     }
 }
 
-enum TestResult<'a> {
+pub enum TestResult<'a> {
     Ok,
     Err(Term<'a>),
 }
@@ -159,8 +160,8 @@ where
     }
 }
 
-/// Serializes a known value, and if the resulting term is equal to the expected term, return `:ok`. Else, return `{:error, actual_term}`.
-fn run_ser_test<'a, T>(env: Env<'a>, actual: &T, expected_term: Term<'a>) -> TestResult<'a>
+/// Serializes a known Rust value, and asserts that the resulting Elixir term is equal to the expected term. Returns `:ok` or `{:error, actual_term}`.
+pub fn run_ser_test<'a, T>(env: Env<'a>, actual: &T, expected_term: Term<'a>) -> TestResult<'a>
 where
     T: PartialEq + Serialize,
 {
@@ -180,8 +181,8 @@ where
     }
 }
 
-/// Deserializes the expected term, and if the resulting native type is equal to the actual value, return `:ok`. Else, return `:error`.
-fn run_de_test<'a, T>(env: Env<'a>, actual: &T, expected_term: Term<'a>) -> TestResult<'a>
+/// Deserializes the expected Elixir term, and asserts that the resulting Rust value is equal to the actual value. Returns `:ok` or `{:error, err.description}`.
+pub fn run_de_test<'a, T>(env: Env<'a>, actual: &T, expected_term: Term<'a>) -> TestResult<'a>
 where
     T: PartialEq + Deserialize<'a>,
 {

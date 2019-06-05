@@ -26,7 +26,7 @@ Below is an example of how you might use `serde_rustler` within a rust NIF:
 #[macro_use]
 extern crate rustler;
 
-use rustler::{Env, Error, Term};
+use rustler::{Env, Error, NifResult, Term};
 use serde::{Serialize, Deserialize};
 use serde_rustler::{Serializer, Deserializer};
 
@@ -42,7 +42,9 @@ enum AnimalType {
     Dog(String),
 }
 
-// NOTE: to actually serialize to an Elixir struct (rather than a just map with a :__struct__ key), you MUST tell serde to rename the struct to the full Elixir struct module atom.
+// NOTE: to actually serialize to an Elixir struct (rather than a just map with
+// a :__struct__ key), you MUST tell serde to rename the struct to the full
+// Elixir struct module atom.
 #[derive(Debug, Serialize, Deserialize)]
 [serde(rename = "Elixir.SerdeNif.Animal")]
 struct Animal {
@@ -50,7 +52,7 @@ struct Animal {
     age: u8,
 }
 
-fn round_trip<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
+fn round_trip<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let animal: Animal = Deserializer::from(args[0]).deserialize()?;
 
     println!("serialized animal = {}", animal);
