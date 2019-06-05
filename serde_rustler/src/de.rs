@@ -4,7 +4,10 @@ use rustler::{
     Decoder, Term, TermType,
 };
 use serde::{
-    de::{self, DeserializeSeed, EnumAccess, MapAccess, SeqAccess, VariantAccess, Visitor},
+    de::{
+        self, Deserialize, DeserializeSeed, EnumAccess, MapAccess, SeqAccess, VariantAccess,
+        Visitor,
+    },
     forward_to_deserialize_any,
 };
 use std::iter;
@@ -195,7 +198,8 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         V: Visitor<'de>,
     {
         validate_binary(self.term)?;
-        visitor.visit_borrowed_str(util::term_to_str(self.term)?)
+        let string = util::term_to_str(self.term)?;
+        visitor.visit_borrowed_str(string)
     }
 
     fn deserialize_string<V>(self, visitor: V) -> Result<V::Value, Self::Error>
@@ -302,7 +306,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         }
 
         let iter = MapIterator::new(self.term).ok_or(Error::ExpectedMap)?;
-        visitor.visit_map(MapDeserializer::new(iter))
+        visitor.visit_map(MapDeserializer::new(iter, false))
     }
 
     fn deserialize_struct<V>(
@@ -317,7 +321,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         validate_struct(self.term, Some(name))?;
 
         let iter = MapIterator::new(self.term).ok_or(Error::ExpectedStruct)?;
-        visitor.visit_map(MapDeserializer::new(iter))
+        visitor.visit_map(MapDeserializer::new(iter, true))
     }
 
     // could be...?
@@ -422,6 +426,7 @@ struct MapDeserializer<'a, I>
 where
     I: Iterator,
 {
+    is_struct: bool,
     iter: iter::Fuse<I>,
     current_value: Option<Term<'a>>,
 }
@@ -430,8 +435,9 @@ impl<'a, I> MapDeserializer<'a, I>
 where
     I: Iterator,
 {
-    fn new(iter: I) -> Self {
+    fn new(iter: I, is_struct: bool) -> Self {
         MapDeserializer {
+            is_struct,
             iter: iter.fuse(),
             current_value: None,
         }
@@ -452,14 +458,28 @@ where
             panic!("MapDeserializer.next_key_seed was called twice in a row")
         }
 
-        match self.iter.next() {
-            None => Ok(None),
-            Some(pair) => {
+        self.iter
+            .next()
+            .map_or(None, |pair| {
+                let (key, _value) = pair;
+
+                if atoms::__struct__().eq(&key) {
+                    self.iter.next()
+                } else {
+                    Some(pair)
+                }
+            })
+            .map_or(Ok(None), |pair| {
                 let (key, value) = pair;
                 self.current_value = Some(value);
-                seed.deserialize(Deserializer::from(key)).map(Some)
-            }
-        }
+
+                if self.is_struct {
+                    seed.deserialize(VariantNameDeserializer::from(key))
+                        .map(Some)
+                } else {
+                    seed.deserialize(Deserializer::from(key)).map(Some)
+                }
+            })
     }
 
     fn next_value_seed<V>(&mut self, seed: V) -> Result<V::Value, Error>
@@ -485,6 +505,7 @@ enum EnumDeserializerType {
 
 struct EnumDeserializer<'a> {
     variant_type: EnumDeserializerType,
+    variant_term: Term<'a>,
     variant: String,
     term: Option<Term<'a>>,
 }
@@ -496,29 +517,19 @@ impl<'a> EnumDeserializer<'a> {
         variants: &'static [&'static str],
         term: Option<Term<'a>>,
     ) -> Result<Self, Error> {
-        let variant: Option<String> = match variant_term.get_type() {
-            TermType::Atom => {
-                let string = atoms::term_to_str(variant_term).or(Err(Error::InvalidVariantName))?;
-                Some(string)
-            }
-            TermType::Binary => Some(String::from(util::term_to_str(variant_term)?)),
-            TermType::Number => Some(String::from(util::term_to_str(variant_term)?)),
-            _ => None,
-        };
+        let var_de = VariantNameDeserializer::from(variant_term);
+        let variant: String = String::deserialize(var_de).or(Err(Error::InvalidVariantName))?;
 
-        variant
-            .ok_or(Error::InvalidVariantName)
-            .and_then(|variant| {
-                if variants.contains(&variant.as_str()) {
-                    Ok(EnumDeserializer {
-                        variant_type,
-                        variant,
-                        term,
-                    })
-                } else {
-                    Err(Error::InvalidVariantName)
-                }
+        if variants.contains(&variant.as_str()) {
+            Ok(EnumDeserializer {
+                variant_type,
+                variant_term,
+                variant,
+                term,
             })
+        } else {
+            Err(Error::InvalidVariantName)
+        }
     }
 }
 
@@ -530,7 +541,7 @@ impl<'de, 'a: 'de> EnumAccess<'de> for EnumDeserializer<'a> {
     where
         V: DeserializeSeed<'de>,
     {
-        let var_de = VariantNameDeserializer::from(self.variant.clone());
+        let var_de = VariantNameDeserializer::from(self.variant_term);
         let val = seed.deserialize(var_de)?;
         Ok((val, self))
     }
@@ -584,7 +595,6 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
         }
     }
 
-    // TODO: Struct variants are represented in JSON as `{ NAME: { K: V, ... } }` so deserialize the inner map here.
     // is a struct, with atom or string struct_name
     fn struct_variant<V>(
         self,
@@ -599,7 +609,7 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
                 if let Some(term) = self.term {
                     validate_struct(term, Some(&self.variant))?;
                     let iter = MapIterator::new(term).ok_or(Error::ExpectedStruct)?;
-                    visitor.visit_map(MapDeserializer::new(iter))
+                    visitor.visit_map(MapDeserializer::new(iter, true))
                 } else {
                     Err(Error::ExpectedStructVariant)
                 }
@@ -609,24 +619,34 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
     }
 }
 
-struct VariantNameDeserializer {
-    variant: String,
+struct VariantNameDeserializer<'a> {
+    variant: Term<'a>,
 }
 
-impl From<String> for VariantNameDeserializer {
-    fn from(variant: String) -> Self {
+impl<'a> From<Term<'a>> for VariantNameDeserializer<'a> {
+    fn from(variant: Term<'a>) -> Self {
         VariantNameDeserializer { variant }
     }
 }
 
-impl<'de> de::Deserializer<'de> for VariantNameDeserializer {
+impl<'de, 'a: 'de> de::Deserializer<'de> for VariantNameDeserializer<'a> {
     type Error = Error;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value, Error>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_string(self.variant)
+        let variant = match self.variant.get_type() {
+            TermType::Atom => {
+                let string = atoms::term_to_str(self.variant).or(Err(Error::InvalidVariantName))?;
+                Ok(string)
+            }
+            TermType::Binary => Ok(String::from(util::term_to_str(self.variant)?)),
+            TermType::Number => Ok(String::from(util::term_to_str(self.variant)?)),
+            _ => Err(Error::ExpectedStringable),
+        }?;
+
+        visitor.visit_string(variant)
     }
 
     forward_to_deserialize_any! {
@@ -651,8 +671,6 @@ fn parse_binary<'a>(term: Term<'a>) -> Result<&'a [u8], Error> {
     let binary: Binary = term.decode().or(Err(Error::ExpectedBinary))?;
     Ok(binary.as_slice())
 }
-
-// fn parse_tuple<'a>(term: Term<'a>) -> Result<Vec<Term<'a>>, Error> {}
 
 fn validate_binary<'a>(term: Term<'a>) -> Result<(), Error> {
     if !term.is_binary() {

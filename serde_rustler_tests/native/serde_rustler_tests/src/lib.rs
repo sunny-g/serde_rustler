@@ -73,7 +73,7 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         "unit variant" => run_test!(UnitVariant::A),
 
         // Newtype Types
-        "newtype struct" => run_test!(NewtypeStruct::new(u8::max_value())),
+        "newtype struct" => run_test!(NewtypeStruct(u8::max_value())),
         "newtype variant" => run_test!(NewtypeVariant::N(u8::max_value())),
         "newtype variant (ok)" => {
             let ok: Result<u8, String> = Ok(u8::max_value());
@@ -87,15 +87,15 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         // Sequences
         "sequences (primitive)" => run_test!(vec!["hello", "world"]),
         "sequences (complex)" => {
-            let a = NewtypeStruct::new(u8::min_value());
-            let b = NewtypeStruct::new(u8::max_value());
+            let a = NewtypeStruct(u8::min_value());
+            let b = NewtypeStruct(u8::max_value());
             run_test!(vec![a, b])
         }
 
         // Tuple Types
         "tuple (empty)" => run_test!(()), // same as unit
         "tuple" => run_test!((0, 255)),
-        "tuple struct" => run_test!(TupleStruct::new(0, 128, 255)),
+        "tuple struct" => run_test!(TupleStruct(0, 128, 255)),
         "tuple variant" => run_test!(TupleVariant::T(0, 255)),
 
         // Map and Struct Types
@@ -108,12 +108,23 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         }
         "map (complex)" => {
             let mut map = HashMap::new();
-            map.insert("key", Struct::new(0, 0, 0));
-            map.insert("val", Struct::new(255, 255, 255));
+            map.insert("key", Struct { r: 0, g: 0, b: 0 });
+            map.insert(
+                "val",
+                Struct {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                },
+            );
 
             run_test!(map)
         }
-        "struct" => run_test!(Struct::new(0, 128, 255)),
+        "struct" => run_test!(Struct {
+            r: 0,
+            g: 128,
+            b: 255
+        }),
         "struct variant" => run_test!(StructVariant::S {
             r: 0,
             g: 128,

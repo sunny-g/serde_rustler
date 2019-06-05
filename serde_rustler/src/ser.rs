@@ -78,11 +78,11 @@ impl<'a> ser::Serializer for Serializer<'a> {
 
     // TODO: update rustler to support u128 and i128
     serde_if_integer128! {
-        fn serialize_i128(self, v: i128) -> Result<Self::Ok, Self::Error> {
+        fn serialize_i128(self, _v: i128) -> Result<Self::Ok, Self::Error> {
             unimplemented!()
         }
 
-        fn serialize_u128(self, v: u128) -> Result<Self::Ok, Self::Error> {
+        fn serialize_u128(self, _v: u128) -> Result<Self::Ok, Self::Error> {
             unimplemented!()
         }
     }
@@ -96,7 +96,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
     }
 
     // TODO
-    fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok, Self::Error> {
+    fn serialize_bytes(self, _v: &[u8]) -> Result<Self::Ok, Self::Error> {
         unimplemented!("return Binary or OwnedBinary?");
     }
 

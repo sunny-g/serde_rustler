@@ -42,6 +42,7 @@ quick_error! {
         InvalidSequenceElement {
             description("Failed to deserialize sequence element")
         }
+
         ExpectedAtom {
             description("Expected to deserialize atom")
         }
@@ -57,6 +58,9 @@ quick_error! {
         ExpectedChar {
             description("Expected to deserialize char")
         }
+        ExpectedStringable {
+            description("Expected to deserialize a stringable term")
+        }
         ExpectedNil {
             description("Expected to deserialize nil")
         }
@@ -65,9 +69,6 @@ quick_error! {
         }
         ExpectedTuple {
             description("Expected to deserialize tuple")
-        }
-        ExpectedNewtypeStruct {
-            description("Expected to deserialize newtype struct tuple")
         }
         ExpectedEnum {
             description("Expected to deserialize enum")
@@ -86,6 +87,9 @@ quick_error! {
         }
         ExpectedUnitVariant {
             description("Expected to deserialize unit variant")
+        }
+        ExpectedNewtypeStruct {
+            description("Expected to deserialize newtype struct tuple")
         }
         ExpectedNewtypeVariant {
             description("Expected to deserialize newtype variant")

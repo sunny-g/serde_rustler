@@ -7,7 +7,6 @@
 extern crate lazy_static;
 #[macro_use]
 extern crate rustler;
-#[macro_use]
 extern crate rustler_codegen;
 
 pub mod atoms;

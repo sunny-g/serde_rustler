@@ -14,22 +14,10 @@ pub enum NewtypeVariant {
 }
 
 #[derive(PartialEq, Serialize, Deserialize)]
-pub struct NewtypeStruct(u8);
-
-impl NewtypeStruct {
-    pub fn new(mm: u8) -> Self {
-        NewtypeStruct(mm)
-    }
-}
+pub struct NewtypeStruct(pub u8);
 
 #[derive(PartialEq, Serialize, Deserialize)]
-pub struct TupleStruct(u8, u8, u8);
-
-impl TupleStruct {
-    pub fn new(r: u8, g: u8, b: u8) -> Self {
-        TupleStruct(r, g, b)
-    }
-}
+pub struct TupleStruct(pub u8, pub u8, pub u8);
 
 #[derive(PartialEq, Serialize, Deserialize)]
 pub enum TupleVariant {
@@ -39,15 +27,9 @@ pub enum TupleVariant {
 #[derive(PartialEq, Serialize, Deserialize)]
 #[serde(rename = "Elixir.SerdeRustlerTests.NifTest.Struct")]
 pub struct Struct {
-    r: u8,
-    g: u8,
-    b: u8,
-}
-
-impl Struct {
-    pub fn new(r: u8, g: u8, b: u8) -> Self {
-        Struct { r: r, g: g, b: b }
-    }
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
 }
 
 #[derive(PartialEq, Serialize, Deserialize)]
