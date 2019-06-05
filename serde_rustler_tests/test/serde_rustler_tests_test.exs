@@ -69,7 +69,7 @@ defmodule SerdeRustlerTests.NifTest do
     end
 
     test "unit variant" do
-      run_tests("unit variant", :A)
+      run_tests("unit variant", :"UnitVariant::A")
     end
   end
 

@@ -5,6 +5,7 @@ pub struct Unit;
 
 #[derive(PartialEq, Serialize, Deserialize)]
 pub enum UnitVariant {
+    #[serde(rename = "UnitVariant::A")]
     A,
 }
 

@@ -3,7 +3,6 @@
 
 #[macro_use]
 extern crate rustler;
-extern crate serde_rustler;
 
 mod types;
 
