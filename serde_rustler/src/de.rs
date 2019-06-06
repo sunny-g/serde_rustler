@@ -13,8 +13,16 @@ use serde::{
 use std::iter;
 
 /**
- *
+ * Converts a native Elixir term to a native Rust type.
  */
+pub fn from_term<'de, 'a: 'de, T>(term: Term<'a>) -> Result<T, Error>
+where
+    T: Deserialize<'de>,
+{
+    let de = Deserializer::from(term);
+    T::deserialize(de)
+}
+
 pub struct Deserializer<'a> {
     term: Term<'a>,
 }
