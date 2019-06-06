@@ -1,6 +1,4 @@
-use crate::atoms;
 use quick_error::quick_error;
-use rustler::{types::tuple, Encoder, Env, Term};
 use serde::{de, ser};
 use std::fmt::Display;
 
@@ -118,14 +116,12 @@ quick_error! {
 }
 
 impl ser::Error for Error {
-    #[cold]
     fn custom<T: Display>(msg: T) -> Error {
         Error::SerializationError(msg.to_string())
     }
 }
 
 impl de::Error for Error {
-    #[cold]
     fn custom<T: Display>(msg: T) -> Error {
         Error::DeserializationError(msg.to_string())
     }

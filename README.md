@@ -10,7 +10,7 @@
 
 This repo contains the following:
 
-- [`serde_rustler`](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler) [![Crates.io](https://img.shields.io/crates/v/serde_rustler.svg)](https://crates.io/crates/serde_rustler) [![Documentation](https://docs.rs/serde_rustler/badge.svg)](https://docs.rs/serde_rustler) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/): Rust crate providing the Serializer and Deserializer traits; meant to be used within your NIF libraries.
+- [`serde_rustler`](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler): Rust crate providing the Serializer and Deserializer traits; meant to be used within your NIF libraries.
 - [`serde_rustler_tests`](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler_tests): NIF written for testing `serde_rustler`
   - see the repo [README](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler/README.md) for installation instructions, a simple example of usage, and data model conversion table.
   - check out the tests in [`test/serde_rustler_tests_test.exs`](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/test/serde_rustler_tests_test.exs) to see the Elixir-end of the types and tests, or [`native/serde_rustler_tests/src/lib.rs`](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/native/serde_rustler_tests/src/lib.rs) and [`native/serde_rustler_tests/src/types.rs`](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/native/serde_rustler_tests/src/types.rs) to see the NIF implementation, tests and Rust native types.

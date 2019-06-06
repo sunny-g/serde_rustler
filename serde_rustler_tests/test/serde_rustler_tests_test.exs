@@ -57,6 +57,7 @@ defmodule SerdeRustlerTests.NifTest do
     Struct,
     StructVariant
   }
+
   require NewtypeStruct
   require NewtypeVariant.N
   require TupleStruct
@@ -73,37 +74,71 @@ defmodule SerdeRustlerTests.NifTest do
       run_tests("false", false)
     end
 
-    test "integers" do
+    test "i8" do
       run_tests("i8 (min)", -128)
       run_tests("i8 (max)", 127)
+    end
+
+    test "i16" do
       run_tests("i16 (min)", -32_768)
       run_tests("i16 (max)", 32_767)
+    end
+
+    test "i32" do
       run_tests("i32 (min)", -2_147_483_648)
       run_tests("i32 (max)", 2_147_483_647)
+    end
+
+    test "i64" do
       run_tests("i64 (min)", -9_223_372_036_854_775_808)
       run_tests("i64 (max)", 9_223_372_036_854_775_807)
-      # run_tests("i128 (min)", 100)
-      # run_tests("i128 (max)", 100)
     end
 
-    test "unsigned integers" do
+    @tag :skip
+    test "i128" do
+      run_tests("i128 (min)", 100)
+      run_tests("i128 (max)", 100)
+    end
+
+    test "u8" do
       run_tests("u8 (min)", 0)
       run_tests("u8 (max)", 255)
-      run_tests("u16 (min)", 0)
-      run_tests("u16 (max)", 65_535)
-      run_tests("u32 (min)", 0)
-      run_tests("u32 (max)", 4_294_967_295)
-      run_tests("u64 (min)", 0)
-      run_tests("u64 (max)", 18_446_744_073_709_551_615)
-      # run_tests("u128 (min)", 100)
-      # run_tests("u128 (max)", 100)
     end
 
-    test "chars, strings and binaries" do
+    test "u16" do
+      run_tests("u16 (min)", 0)
+      run_tests("u16 (max)", 65_535)
+    end
+
+    test "u32" do
+      run_tests("u32 (min)", 0)
+      run_tests("u32 (max)", 4_294_967_295)
+    end
+
+    test "u64" do
+      run_tests("u64 (min)", 0)
+      run_tests("u64 (max)", 18_446_744_073_709_551_615)
+    end
+
+    @tag :skip
+    test "u128" do
+      run_tests("u128 (min)", 100)
+      run_tests("u128 (max)", 100)
+    end
+
+    @tag :skip
+    test "chars" do
       # TODO: should be charlist type
       run_tests("char (empty)", '')
+      # run_tests("char", '')
+    end
+
+    test "strings" do
       run_tests("str (empty)", "")
       run_tests("str", "hello world")
+    end
+
+    test "bytes" do
       run_tests("bytes", <<3, 2, 1, 0>>)
     end
   end

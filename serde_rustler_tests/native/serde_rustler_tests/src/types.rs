@@ -1,5 +1,21 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+enum AnimalType {
+    Cat(String),
+    Dog(String),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename = "Elixir.SerdeRustlerTests.Readme.Animal")]
+pub struct Animal {
+    #[serde(rename = "type")]
+    _type: AnimalType,
+    name: String,
+    age: u8,
+    owner: Option<String>,
+}
+
 #[derive(PartialEq, Serialize, Deserialize)]
 pub struct Unit;
 

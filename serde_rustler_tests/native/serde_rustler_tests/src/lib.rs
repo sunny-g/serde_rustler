@@ -9,19 +9,37 @@ mod types;
 
 rustler_export_nifs! {
     "Elixir.SerdeRustlerTests",
-    [("test", 3, test)],
+    [   ("readme", 1, readme),
+        ("round_trip", 1, round_trip),
+        ("test", 3, test),
+    ],
     None
 }
 
 use crate::types::{
-    NewtypeStruct, NewtypeVariant, Struct, StructVariant, TupleStruct, TupleVariant, Unit,
+    Animal, NewtypeStruct, NewtypeVariant, Struct, StructVariant, TupleStruct, TupleVariant, Unit,
     UnitVariant,
 };
-use rustler::{Encoder, Env, NifResult, Term};
+use rustler::{types::tuple, Encoder, Env, NifResult, Term};
 use serde::{Deserialize, Serialize};
-use serde_rustler::{atoms, util::error_tuple, Deserializer, Serializer};
+use serde_bytes::Bytes;
+use serde_rustler::{atoms, from_term, to_term, Error};
 use std::{collections::HashMap, error::Error as StdError};
 
+/// Implements the README example.
+pub fn readme<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    tag_tuple(env, || {
+        let animal: Animal = from_term(args[0])?;
+        to_term(env, animal)
+    })
+}
+
+/// Deserializes anything from an Elixir term and subsequently serializes the result abck to an Elixir term, returning it.
+pub fn round_trip<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    tag_tuple(env, || to_term(env, from_term(args[0])?))
+}
+
+/// Serializes or deserializes a known Elixir term to/from a known Rust value, asserts that the resulting is equivalent to known term/value.
 pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let test_type: &str = args[0].decode()?;
     let test_name: &str = args[1].decode()?;
@@ -65,7 +83,7 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         "char (empty)" => run_test!(0 as u8 as char),
         "str (empty)" => run_test!(""),
         "str" => run_test!("hello world"),
-        "bytes" => run_test!([3, 2, 1, 0]),
+        "bytes" => run_test!(Bytes::new(&[3, 2, 1, 0])),
 
         // Unit Types
         "unit" => run_test!(()),
@@ -165,8 +183,7 @@ pub fn run_ser_test<'a, T>(env: Env<'a>, actual: &T, expected_term: Term<'a>) ->
 where
     T: PartialEq + Serialize,
 {
-    let ser = Serializer::from(env);
-    match actual.serialize(ser) {
+    match to_term(env, actual) {
         Err(reason) => {
             let reason_term = reason.description().encode(env);
             TestResult::Err(error_tuple(env, reason_term))
@@ -186,8 +203,7 @@ pub fn run_de_test<'a, T>(env: Env<'a>, actual: &T, expected_term: Term<'a>) -> 
 where
     T: PartialEq + Deserialize<'a>,
 {
-    let de = Deserializer::from(expected_term);
-    match T::deserialize(de) {
+    match from_term(expected_term) {
         Err(reason) => {
             let reason_term = reason.description().encode(env);
             TestResult::Err(error_tuple(env, reason_term))
@@ -198,6 +214,36 @@ where
             } else {
                 TestResult::Err(atoms::error().encode(env))
             }
+        }
+    }
+}
+
+fn tag_tuple<'a, F>(env: Env<'a>, func: F) -> NifResult<Term<'a>>
+where
+    F: FnOnce() -> Result<Term<'a>, Error>,
+{
+    match func() {
+        Err(reason) => to_tagged_tuple(env, Err(reason)),
+        Ok(term) => to_tagged_tuple(env, Ok(term)),
+    }
+}
+
+fn ok_tuple<'a>(env: Env<'a>, term: Term<'a>) -> Term<'a> {
+    let ok_atom_term = atoms::ok().encode(env);
+    tuple::make_tuple(env, &vec![ok_atom_term, term])
+}
+
+fn error_tuple<'a>(env: Env<'a>, reason_term: Term<'a>) -> Term<'a> {
+    let err_atom_term = atoms::error().encode(env);
+    tuple::make_tuple(env, &vec![err_atom_term, reason_term])
+}
+
+fn to_tagged_tuple<'a>(env: Env<'a>, res: Result<Term<'a>, Error>) -> NifResult<Term<'a>> {
+    match res {
+        Ok(term) => Ok(ok_tuple(env, term)),
+        Err(reason) => {
+            let reason_term = reason.description().encode(env);
+            Ok(error_tuple(env, reason_term))
         }
     }
 }

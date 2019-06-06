@@ -1,13 +1,22 @@
 use crate::{atoms, error::Error, util};
-use rustler::{types::tuple, Encoder, Env, Term};
+use rustler::{types::tuple, Encoder, Env, OwnedBinary, Term};
 use serde::{
     ser::{self, Serialize},
     serde_if_integer128,
 };
+use std::io::Write;
 
 /**
- *
+ * Converts a native Rust type into a native Elixir term.
  */
+pub fn to_term<'a, T>(env: Env<'a>, value: T) -> Result<Term<'a>, Error>
+where
+    T: Serialize,
+{
+    let ser = Serializer::from(env);
+    value.serialize(ser)
+}
+
 #[derive(Clone, Copy)]
 pub struct Serializer<'a> {
     env: Env<'a>,
@@ -79,11 +88,11 @@ impl<'a> ser::Serializer for Serializer<'a> {
     // TODO: update rustler to support u128 and i128
     serde_if_integer128! {
         fn serialize_i128(self, _v: i128) -> Result<Self::Ok, Self::Error> {
-            unimplemented!()
+            unimplemented!("awaiting rustler support for i128s")
         }
 
         fn serialize_u128(self, _v: u128) -> Result<Self::Ok, Self::Error> {
-            unimplemented!()
+            unimplemented!("awaiting rustler support for u128s")
         }
     }
 
@@ -95,9 +104,10 @@ impl<'a> ser::Serializer for Serializer<'a> {
         util::str_to_term(self.env, v)
     }
 
-    // TODO
-    fn serialize_bytes(self, _v: &[u8]) -> Result<Self::Ok, Self::Error> {
-        unimplemented!("return Binary or OwnedBinary?");
+    fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok, Self::Error> {
+        let mut binary = OwnedBinary::new(v.len()).unwrap();
+        binary.as_mut_slice().write(v).unwrap();
+        Ok(binary.release(self.env).to_term(self.env))
     }
 
     /// Serializes unit (empty tuple) as `nil`.

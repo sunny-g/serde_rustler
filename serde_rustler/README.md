@@ -22,46 +22,51 @@ serde_rustler = "0.0.1"
 Below is an example of how you might use `serde_rustler` within a rust NIF:
 
 ```rust
-// within your rustler NIF
 #[macro_use]
 extern crate rustler;
 
-use rustler::{Env, Error, NifResult, Term};
+use rustler::{Env, error::Error as NifError, NifResult, Term};
 use serde::{Serialize, Deserialize};
-use serde_rustler::{Serializer, Deserializer};
+use serde_rustler::{from_term, to_term};
 
 rustler_export_nifs! {
     "Elixir.SerdeNif",
-    [("round_trip", 1, round_trip)],
+    [("readme", 1, readme)],
     None
 }
 
+// NOTE: to serialize to the correct Elixir record, you MUST tell serde to rename the variants to the full Elixir record module atom.
 #[derive(Debug, Serialize, Deserialize)]
 enum AnimalType {
+    #[serde(rename = "Elixir.SerdeNif.AnimalType.Cat")]
     Cat(String),
+    #[serde(rename = "Elixir.SerdeNif.AnimalType.Dog")]
     Dog(String),
 }
 
-// NOTE: to actually serialize to an Elixir struct (rather than a just map with
+// NOTE: to serialize to an actual Elixir struct (rather than a just map with
 // a :__struct__ key), you MUST tell serde to rename the struct to the full
 // Elixir struct module atom.
 #[derive(Debug, Serialize, Deserialize)]
-[serde(rename = "Elixir.SerdeNif.Animal")]
+#[serde(rename = "Elixir.SerdeNif.Animal")]
 struct Animal {
+    #[serde(rename = "type")]
+    _type: AnimalType,
     name: String,
     age: u8,
+    owner: Option<String>,
 }
 
-fn round_trip<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let animal: Animal = Deserializer::from(args[0]).deserialize()?;
+fn readme<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    let animal: Animal = from_term(args[0]).or(Err(NifError::BadArg))?;
 
-    println!("serialized animal = {}", animal);
+    println!("serialized animal: {:?}", animal);
 
-    return Serializer::from(env).serialize();
+    to_term(env, animal).or(Err(NifError::BadArg))
 }
 ```
 
-Corresponding Elixir code:
+Corresponding Elixir code (code structure, `import`s, `alias`es and `require`s simplified or omitted for brevity):
 
 ```elixir
 defmodule SerdeNif do
@@ -70,49 +75,77 @@ defmodule SerdeNif do
   def round_trip(_term), do: :erlang.nif_error(:nif_not_loaded)
 
   defmodule Animal do
-    @type t :: %Animal{name: bitstring, age: pos_integer}
-    defstruct name: "", age: 0
+    @type t :: %Animal{
+      type: Cat.t() | Dog.t(),
+      name: bitstring,
+      age: pos_integer,
+      owner: nil | bitstring
+    }
+    defstruct type: Cat.record(), name: "", age: 0, owner: nil
+
+    @doc "Deserializes term as a Rust `Animal` struct, then serializes it back into an Elixir `Animal` struct. Should return true."
+    def test() do
+      animal = %Animal{
+        type: Animal.Cat.record(),
+        name: "Garfield",
+        age: 41,
+      }
+
+      SerdeNif.readme(animal) == animal
+    end
   end
 
   defmodule AnimalType.Cat do
     require Record
-    @type t :: record(:Cat, breed: String.t())
-    Record.defrecord(:Cat, breed: "tabby")
+    @type t {__MODULE__, String.t()}
+    Record.defrecord(:record, __MODULE__, breed: "tabby")
   end
 
   defmodule AnimalType.Dog do
     require Record
-    @type t :: record(:Dog, breed: String.t())
-    Record.defrecord(:Dog, breed: "mutt")
+    @type t {__MODULE__, String.t()}
+    Record.defrecord(:record, :Dog, breed: "mutt")
   end
 end
 ```
 
 ### Conversion Table
 
-| Type Name | Serde Data Model | Default Elixir Term |
+| Type Name | Serde (Rust) Values | Elixir Terms (default behaviour) |
 |-----------|------------------|---------------------|
 | bool | `true` or `false` | `true` or `false` |
-| number | `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` | `number` |
-| char | `""` | `bitstring` |
+| <sup>[1](#todo)</sup> number | `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` (todo: `i128` and `u128`) | `number` |
+| <sup>[1](#atom)</sup> char | `""` | `bitstring` |
 | string | `""` | `bitstring` |
-| byte array | `[u8]` | `<<_::_*8>>` |
+| <sup>[2](#byte)</sup> byte array | `&[u8]` or `Vec<u8>` | `<<_::_*8>>` |
 | option | `Some(T)` or `None` | `T` or `:nil` |
 | unit | `None` | `:nil` |
 | unit struct | `struct Unit` | `:nil` |
-| unit variant | `E::A` in `enum UnitVariant { A }` | <sup>[1](#atom)</sup> `:A` |
-| newtype struct | `struct Millimeters(u8)` | <sup>[1](#atom)</sup> `{:Millimeters, u8}` |
-| newtype variant | `E::N` in `enum E { N(u8) }` | <sup>[1](#atom)</sup> `{:N, u8}` |
-| newtype variant (Result) | `Result::Ok(T)` or `Result::Err(E)` in `Result<T, E>` | <sup>[1](#atom)</sup> `{:ok, T}` or `{:error, E}` |
+| <sup>[3](#atom)</sup> unit variant | `E::A` in `enum UnitVariant { A }` | `:A` |
+| <sup>[3](#atom)</sup> newtype struct | `struct Millimeters(u8)` | `{:Millimeters, u8}` |
+| <sup>[3](#atom)</sup> newtype variant | `E::N` in `enum E { N(u8) }` | `{:N, u8}` |
+| newtype variant (any `Ok` and `Err` tagged enum) | `enum R<T, E> { Ok(T), Err(E) }` | `{:ok, T}` or `{:error, E}` |
 | seq | `Vec<T>` | `[T]` |
 | tuple | `(u8,)` | `{u8,}` |
-| tuple struct | `struct Rgb(u8, u8, u8)` | <sup>[1](#atom)</sup> `{:Rgb, u8, u8, u8}` |
-| tuple variant | `E::T` in `enum E { T(u8, u8) }` | <sup>[1](#atom)</sup> `{:T, u8, u8}` |
-| map | `HashMap<K, V>` | `%{}` |
-| struct | `struct Rgb { r: u8, g: u8, b: u8 }` | <sup>[1](#atom)</sup> `%Rgb{ r: byte, g: byte, b: byte }` |
-| struct variant | `E::S` in `enum E { Rgb { r: u8, g: u8, b: u8 } }` | <sup>[1](#atom)</sup> `%Rgb{ r: byte, g: byte, b: byte }` |
+| <sup>[3](#atom)</sup> tuple struct | `struct Rgb(u8, u8, u8)` | `{:Rgb, u8, u8, u8}` |
+| <sup>[3](#atom)</sup> tuple variant | `E::T` in `enum E { T(u8, u8) }` | `{:T, u8, u8}` |
+| <sup>[1](#todo)</sup> map | `HashMap<K, V>` | `%{}` |
+| <sup>[3](#atom)</sup> struct | `struct Rgb { r: u8, g: u8, b: u8 }` | `%Rgb{ r: byte, g: byte, b: byte }` |
+| <sup>[3](#atom)</sup> struct variant | `E::S` in `enum E { Rgb { r: u8, g: u8, b: u8 } }` | `%Rgb{ r: byte, g: byte, b: byte }` |
 
-<a name="atom">1</a>: When serializing unknown input to terms, struct and record atoms will not be created and instead replaced with Elixir bitstrings. Therefore "records" will be tuples (`{bitstring, ...}`) and "structs" will be maps containing `%{:__struct__ => bitstring}` (feedback welcome :)).
+<a name="todo">1</a>: API still being decided / implemented.
+
+<a name="byte">2</a>: Requires specifying a specific serialize implementation, such as [`serde_bytes`](https://crates.io/crates/serde_bytes/).
+
+<a name="atom">3</a>: When serializing unknown input to terms, struct and record atoms will not be created and will instead be replaced with Elixir bitstrings. Therefore "records" will be tuples (`{bitstring, ...}`) and "structs" will be maps containing `%{:__struct__ => bitstring}` (feedback welcome :)).
+
+## TODO
+
+- [ ] finalize behaviour around chars, charlists, iolists, map keys
+- [ ] still getting used to Rust, so may need to improve error handling nnd ergnomoics around API
+- [ ] support for `i128` and `u128`
+- [ ] more extensive (i.e. possible addition of smoke, property-based) testing
+- [ ] benchmarking
 
 ## Changelog
 
