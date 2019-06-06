@@ -235,7 +235,7 @@ defmodule SerdeRustlerTests.NifTest do
 
     assert actual_ser == :ok, ~s"""
       serializing `#{test_name}`
-      expected: #{inspect(expected_term)} actual: #{print_err(actual_ser)}
+      expected: #{inspect(expected_term)}, actual: #{print_err(actual_ser)}
     """
 
     actual_de = SerdeRustlerTests.test("deserialize", test_name, expected_term)
@@ -244,8 +244,16 @@ defmodule SerdeRustlerTests.NifTest do
       deserializing `#{test_name}`
       error: #{print_err(actual_de)}
     """
+
+    round_trip = SerdeRustlerTests.round_trip(expected_term)
+
+    assert round_trip == {:ok, expected_term}, ~s"""
+      round-tripping `#{test_name}`
+      expected: #{inspect(expected_term)}, received error: #{print_err(round_trip)}
+    """
   end
 
   defp print_err(:ok), do: ""
+  defp print_err({:ok, _}), do: ""
   defp print_err({:error, term}), do: inspect(term)
 end

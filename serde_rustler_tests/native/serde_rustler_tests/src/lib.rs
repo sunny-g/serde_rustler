@@ -57,7 +57,7 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         "true" => run_test!(true),
         "false" => run_test!(false),
 
-        // Numbers
+        // Signed Integers
         "i8 (min)" => run_test!(i8::min_value()),
         "i8 (max)" => run_test!(i8::max_value()),
         "i16 (min)" => run_test!(i16::min_value()),
@@ -66,8 +66,10 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         "i32 (max)" => run_test!(i32::max_value()),
         "i64 (min)" => run_test!(i64::min_value()),
         "i64 (max)" => run_test!(i64::max_value()),
-        // "i128 (min)" => run_test!(i128::min_value()),
-        // "i128 (max)" => run_test!(i128::max_value()),
+        "i128 (min)" => run_test!(i128::min_value()),
+        "i128 (max)" => run_test!(i128::max_value()),
+
+        // Unsigned Integers
         "u8 (min)" => run_test!(u8::min_value()),
         "u8 (max)" => run_test!(u8::max_value()),
         "u16 (min)" => run_test!(u16::min_value()),
@@ -76,10 +78,10 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         "u32 (max)" => run_test!(u32::max_value()),
         "u64 (min)" => run_test!(u64::min_value()),
         "u64 (max)" => run_test!(u64::max_value()),
-        // "u128 (min)" => run_test!(u128::min_value()),
-        // "u128 (max)" => run_test!(u128::max_value()),
+        "u128 (min)" => run_test!(u128::min_value()),
+        "u128 (max)" => run_test!(u128::max_value()),
 
-        // Strings and Binaries
+        // Chars, Strings and Binaries
         "char (empty)" => run_test!(0 as u8 as char),
         "str (empty)" => run_test!(""),
         "str" => run_test!("hello world"),

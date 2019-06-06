@@ -2,7 +2,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 enum AnimalType {
+    #[serde(rename = "Elixir.SerdeRustlerTests.Readme.AnimalType.Cat")]
     Cat(String),
+    #[serde(rename = "Elixir.SerdeRustlerTests.Readme.AnimalType.Dog")]
     Dog(String),
 }
 

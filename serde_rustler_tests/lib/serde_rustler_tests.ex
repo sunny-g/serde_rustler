@@ -7,5 +7,5 @@ defmodule SerdeRustlerTests do
 
   def readme(_animal), do: :erlang.nif_error(:nif_not_loaded)
   def round_trip(_term), do: :erlang.nif_error(:nif_not_loaded)
-  def test(_test_type, _test_name, _expected), do: :erlang.nif_error(:nif_not_loaded)
+  def test(_test_impl, _test_name, _expected_term), do: :erlang.nif_error(:nif_not_loaded)
 end

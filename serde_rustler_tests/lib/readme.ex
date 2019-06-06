@@ -1,13 +1,13 @@
 defmodule SerdeRustlerTests.Readme.AnimalType.Cat do
   require Record
-  # @type t :: record(:Cat, breed: String.t())
-  Record.defrecord(:record, :Cat, breed: "tabby")
+  @type t :: {__MODULE__, String.t()}
+  Record.defrecord(:record, __MODULE__, breed: "tabby")
 end
 
 defmodule SerdeRustlerTests.Readme.AnimalType.Dog do
   require Record
-  # @type t :: record(:Dog, breed: String.t())
-  Record.defrecord(:record, :Dog, breed: "mutt")
+  @type t :: {__MODULE__, String.t()}
+  Record.defrecord(:record, __MODULE__, breed: "mutt")
 end
 
 defmodule SerdeRustlerTests.Readme.Animal do
