@@ -32,18 +32,28 @@ defmodule SerdeRustlerTests.Readme do
   alias SerdeRustlerTests.Readme.{Animal, AnimalType.Cat}
   require Cat
 
-  @doc """
-  ## Examples:
-      iex> #{__MODULE__}.test()
-      true
-  """
-  def test() do
-    animal = %Animal{
+  def animal(),
+    do: %Animal{
       type: Cat.record(),
       name: "Garfield",
       age: 41
     }
 
-    SerdeRustlerTests.readme(animal) == {:ok, animal}
-  end
+  @doc """
+  Round-trips an `t:Animal.t/0` struct using NIF-defined type hints.
+
+  ## Examples:
+      iex> #{__MODULE__}.test()
+      {:ok, #{__MODULE__}.animal()}
+  """
+  def test(), do: SerdeRustlerTests.readme(@animal)
+
+  @doc """
+  Round-trips an `t:Animal.t/0` struct using `serde-transcode`.
+
+  ## Examples:
+      iex> #{__MODULE__}.round_trip()
+      {:ok, #{__MODULE__}.animal()}
+  """
+  def round_trip(), do: SerdeRustlerTests.round_trip(@animal)
 end

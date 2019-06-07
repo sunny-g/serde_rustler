@@ -32,7 +32,7 @@ use std::{collections::HashMap, error::Error as StdError};
 pub fn readme<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     tag_tuple(env, || {
         let animal: Animal = from_term(args[0])?;
-        println!("\nserialized README animal: {:?}", animal);
+        println!("\n deserialized animal from README: {:?}", animal);
         to_term(env, animal)
     })
 }
@@ -41,9 +41,7 @@ pub fn readme<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 #[inline]
 pub fn round_trip<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     tag_tuple(env, || {
-        let de = Deserializer::from(args[0]);
-        let ser = Serializer::from(env);
-        transcode(de, ser)
+        transcode(Deserializer::from(args[0]), Serializer::from(env))
     })
 }
 
@@ -145,6 +143,7 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         }
 
         // Sequences
+        "sequences (empty)" => run_test!(Vec::new() as Vec<u8>),
         "sequences (primitive)" => run_test!(vec!["hello", "world"]),
         "sequences (complex)" => {
             let a = NewtypeStruct(u8::min_value());
@@ -265,8 +264,11 @@ where
     F: FnOnce() -> Result<Term<'a>, Error>,
 {
     match func() {
-        Err(reason) => to_tagged_tuple(env, Err(reason)),
-        Ok(term) => to_tagged_tuple(env, Ok(term)),
+        Ok(term) => Ok(ok_tuple(env, term)),
+        Err(reason) => {
+            let reason_term = reason.description().encode(env);
+            Ok(error_tuple(env, reason_term))
+        }
     }
 }
 
@@ -278,14 +280,4 @@ fn ok_tuple<'a>(env: Env<'a>, term: Term<'a>) -> Term<'a> {
 fn error_tuple<'a>(env: Env<'a>, reason_term: Term<'a>) -> Term<'a> {
     let err_atom_term = atoms::error().encode(env);
     tuple::make_tuple(env, &vec![err_atom_term, reason_term])
-}
-
-fn to_tagged_tuple<'a>(env: Env<'a>, res: Result<Term<'a>, Error>) -> NifResult<Term<'a>> {
-    match res {
-        Ok(term) => Ok(ok_tuple(env, term)),
-        Err(reason) => {
-            let reason_term = reason.description().encode(env);
-            Ok(error_tuple(env, reason_term))
-        }
-    }
 }

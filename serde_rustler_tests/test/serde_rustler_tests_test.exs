@@ -146,15 +146,40 @@ defmodule SerdeRustlerTests.NifTest do
     end
 
     test "f64" do
-      run_tests("f64 (0)", to_float(<<0x0000000000000000>>))
-      run_tests("f64 (-0)", to_float(<<0x8000, 0x000000000000>>))
-      run_tests("f64 (one)", to_float(<<0x3F80, 0x000000000000>>))
-      run_tests("f64 (smallest subnormal)", to_float(<<0x0000000000000001>>))
-      run_tests("f64 (largest subnormal)", to_float(<<0x007F, 0xFFFFFFFFFFFF>>))
-      run_tests("f64 (smallest normal)", to_float(<<0x0080, 0x000000000000>>))
-      run_tests("f64 (largest normal)", to_float(<<0x7F7F, 0xFFFFFFFFFFFF>>))
-      run_tests("f64 (smallest number < 1)", to_float(<<0x3F80, 0x000000000001>>))
-      run_tests("f64 (largest number < 1)", to_float(<<0x3F7F, 0xFFFFFFFFFFFF>>))
+      run_tests("f64 (0)", to_float(<<0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
+      run_tests("f64 (-0)", to_float(<<0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
+      run_tests("f64 (one)", to_float(<<0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
+
+      run_tests(
+        "f64 (smallest subnormal)",
+        to_float(<<0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01>>)
+      )
+
+      run_tests(
+        "f64 (largest subnormal)",
+        to_float(<<0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF>>)
+      )
+
+      run_tests(
+        "f64 (smallest normal)",
+        to_float(<<0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>)
+      )
+
+      run_tests(
+        "f64 (largest normal)",
+        to_float(<<0x7F, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF>>)
+      )
+
+      run_tests(
+        "f64 (smallest number < 1)",
+        to_float(<<0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01>>)
+      )
+
+      run_tests(
+        "f64 (largest number < 1)",
+        to_float(<<0x3F, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF>>)
+      )
+
       # run_tests("f64 (infinity)", to_float(<<0x7f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
       # run_tests("f64 (-infinity)", to_float(<<0xff, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
     end
@@ -209,6 +234,10 @@ defmodule SerdeRustlerTests.NifTest do
   end
 
   describe "Sequences:" do
+    test "sequences (empty)" do
+      run_tests("sequences (empty)", [])
+    end
+
     test "sequences (primitive)" do
       run_tests("sequences (primitive)", ["hello", "world"])
     end

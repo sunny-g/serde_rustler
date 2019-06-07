@@ -13,18 +13,28 @@ pub fn term_to_str(term: Term) -> Result<String, Error> {
         .or(Err(Error::ExpectedStringable))
 }
 
-pub fn parse_number<'a, T: Decoder<'a>>(term: Term<'a>) -> Result<T, Error> {
-    if !term.is_number() {
-        return Err(Error::InvalidNumber);
+pub fn parse_bool(term: Term) -> Result<bool, Error> {
+    if atoms::true_().eq(&term) {
+        Ok(true)
+    } else if atoms::false_().eq(&term) {
+        Ok(false)
+    } else {
+        Err(Error::ExpectedBoolean)
     }
-
-    term.decode().or(Err(Error::ExpectedNumber))
 }
 
 pub fn parse_binary(term: Term) -> Result<&[u8], Error> {
     validate_binary(term)?;
     let binary: Binary = term.decode().or(Err(Error::ExpectedBinary))?;
     Ok(binary.as_slice())
+}
+
+pub fn parse_number<'a, T: Decoder<'a>>(term: Term<'a>) -> Result<T, Error> {
+    if !term.is_number() {
+        return Err(Error::InvalidNumber);
+    }
+
+    term.decode().or(Err(Error::ExpectedNumber))
 }
 
 pub fn validate_binary(term: Term) -> Result<(), Error> {
@@ -61,14 +71,18 @@ pub fn validate_struct<'a>(term: Term<'a>, name: Option<&str>) -> Result<Term<'a
     let __struct__ = atoms::__struct__().to_term(term.get_env());
     let struct_name_term = term.map_get(__struct__).or(Err(Error::ExpectedStruct))?;
 
-    if let Some(name) = name {
-        let name_term =
+    match name {
+        Some(name) if name.ne("") => {
+            let name_term =
             atoms::str_to_term(term.get_env(), name).or(Err(Error::InvalidStructName))?;
 
-        if struct_name_term.ne(&name_term) {
-            return Err(Error::ExpectedStruct);
+            if struct_name_term.eq(&name_term) {
+                Ok(struct_name_term)
+            } else {
+                Err(Error::ExpectedStruct)
+            }
         }
+        Some(_) => Ok(struct_name_term),
+        _ => Err(Error::ExpectedStruct)
     }
-
-    Ok(struct_name_term)
 }
