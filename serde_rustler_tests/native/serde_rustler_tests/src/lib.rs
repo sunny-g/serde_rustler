@@ -135,11 +135,11 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         // Newtype Types
         "newtype struct" => run_test!(NewtypeStruct(u8::max_value())),
         "newtype variant" => run_test!(NewtypeVariant::N(u8::max_value())),
-        "newtype variant (ok)" => {
+        "newtype variant (ok tuple)" => {
             let ok: Result<u8, String> = Ok(u8::max_value());
             run_test!(ok)
         }
-        "newtype variant (error)" => {
+        "newtype variant (error tuple)" => {
             let err: Result<u8, String> = Err(String::from("error reason"));
             run_test!(err)
         }

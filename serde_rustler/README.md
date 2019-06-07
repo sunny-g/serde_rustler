@@ -35,7 +35,8 @@ rustler_export_nifs! {
     None
 }
 
-// NOTE: to serialize to the correct Elixir record, you MUST tell serde to rename the variants to the full Elixir record module atom.
+// NOTE: to serialize to the correct Elixir record, you MUST tell serde to
+// rename the variants to the full Elixir record module atom.
 #[derive(Debug, Serialize, Deserialize)]
 enum AnimalType {
     #[serde(rename = "Elixir.SerdeNif.AnimalType.Cat")]
@@ -114,7 +115,7 @@ end
 | Type Name | Serde (Rust) Values | Elixir Terms (default behaviour) |
 |-----------|------------------|---------------------|
 | bool | `true` or `false` | `true` or `false` |
-| <sup>[1](#todo)</sup> number | `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` (todo: `i128` and `u128`) | `number` |
+| <sup>[1](#todo)</sup> number | `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` (TODO: `i128` and `u128`) | `number` |
 | <sup>[1](#atom)</sup> char | `""` | `bitstring` |
 | string | `""` | `bitstring` |
 | <sup>[2](#byte)</sup> byte array | `&[u8]` or `Vec<u8>` | `<<_::_*8>>` |
@@ -137,7 +138,7 @@ end
 
 <a name="byte">2</a>: Requires specifying a specific serialize implementation, such as [`serde_bytes`](https://crates.io/crates/serde_bytes/).
 
-<a name="atom">3</a>: When serializing unknown input to terms, struct and record atoms will not be created and will instead be replaced with Elixir bitstrings. Therefore "records" will be tuples (`{bitstring, ...}`) and "structs" will be maps containing `%{:__struct__ => bitstring}` (feedback welcome :)).
+<a name="atom">3</a>: When serializing unknown input to terms, atoms will not be created and will instead be replaced with Elixir bitstrings. Therefore "records" will be tuples (`{bitstring, ...}`) and "structs" will be maps containing `%{:__struct__ => bitstring}` (feedback on this decision is welcome).
 
 ## TODO
 

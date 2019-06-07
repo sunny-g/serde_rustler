@@ -9,7 +9,7 @@ use std::io::Write;
 /**
  * Converts a native Rust type into a native Elixir term.
  */
-pub fn to_term<'a, T>(env: Env<'a>, value: T) -> Result<Term<'a>, Error>
+pub fn to_term<T>(env: Env, value: T) -> Result<Term, Error>
 where
     T: Serialize,
 {
@@ -101,7 +101,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
     }
 
     fn serialize_str(self, v: &str) -> Result<Self::Ok, Self::Error> {
-        util::str_to_term(self.env, v)
+        Ok(v.encode(self.env))
     }
 
     fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok, Self::Error> {
@@ -127,7 +127,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         _variant_index: u32,
         variant: &'static str,
     ) -> Result<Self::Ok, Self::Error> {
-        atoms::str_to_term(self.env, variant).or(Err(Error::InvalidVariantName))
+        util::str_to_term(self.env, variant).or(Err(Error::InvalidVariantName))
     }
 
     /// Serializes `struct Millimeters(u8)` as a tagged tuple: `{:Millimeters, u8}` or `{"Millimeters", u8}`, depending on if the atom `:Millimeters` has already been created.
@@ -139,7 +139,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
     where
         T: ?Sized + ser::Serialize,
     {
-        let name_term = atoms::str_to_term(self.env, name).or(Err(Error::InvalidVariantName))?;
+        let name_term = util::str_to_term(self.env, name).or(Err(Error::InvalidVariantName))?;
         let mut ser = SequenceSerializer::new(self, Some(2), Some(name_term));
         ser.add(value.serialize(self)?);
         ser.to_tuple()
@@ -180,7 +180,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeTupleStruct, Self::Error> {
-        let name_term = atoms::str_to_term(self.env, name).or(Err(Error::InvalidVariantName))?;
+        let name_term = util::str_to_term(self.env, name).or(Err(Error::InvalidVariantName))?;
         Ok(SequenceSerializer::new(self, Some(len), Some(name_term)))
     }
 
@@ -206,7 +206,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeStruct, Self::Error> {
-        let name_term = atoms::str_to_term(self.env, name).or(Err(Error::InvalidStructName))?;
+        let name_term = util::str_to_term(self.env, name).or(Err(Error::InvalidStructName))?;
         Ok(MapSerializer::new(self, Some(len), Some(name_term)))
     }
 
@@ -329,7 +329,7 @@ impl<'a> ser::SerializeStruct for MapSerializer<'a> {
     where
         T: ?Sized + Serialize,
     {
-        let key_term = atoms::str_to_term(self.ser.env, key).or(Err(Error::InvalidStructKey))?;
+        let key_term = util::str_to_term(self.ser.env, key).or(Err(Error::InvalidStructKey))?;
         self.add_key(key_term);
         self.add_val(value.serialize(self.ser)?);
         Ok(())
@@ -377,7 +377,7 @@ impl<'a> SequenceSerializer<'a> {
         SequenceSerializer { ser, items }
     }
 
-    fn add(&mut self, term: Term<'a>) -> () {
+    fn add(&mut self, term: Term<'a>) {
         self.items.push(term)
     }
 
@@ -417,11 +417,11 @@ impl<'a> MapSerializer<'a> {
         }
     }
 
-    fn add_key(&mut self, term: Term<'a>) -> () {
+    fn add_key(&mut self, term: Term<'a>) {
         self.keys.push(term)
     }
 
-    fn add_val(&mut self, term: Term<'a>) -> () {
+    fn add_val(&mut self, term: Term<'a>) {
         self.values.push(term)
     }
 

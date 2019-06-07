@@ -134,27 +134,27 @@ defmodule SerdeRustlerTests.NifTest do
     test "f32" do
       run_tests("f32 (0)", to_float(<<0x00, 0x00, 0x00, 0x00>>))
       run_tests("f32 (-0)", to_float(<<0x80, 0x00, 0x00, 0x00>>))
-      run_tests("f32 (one)", to_float(<<0x3f, 0x80, 0x00, 0x00>>))
+      run_tests("f32 (one)", to_float(<<0x3F, 0x80, 0x00, 0x00>>))
       run_tests("f32 (smallest subnormal)", to_float(<<0x00, 0x00, 0x00, 0x01>>))
-      run_tests("f32 (largest subnormal)", to_float(<<0x00, 0x7f, 0xff, 0xff>>))
+      run_tests("f32 (largest subnormal)", to_float(<<0x00, 0x7F, 0xFF, 0xFF>>))
       run_tests("f32 (smallest normal)", to_float(<<0x00, 0x80, 0x00, 0x00>>))
-      run_tests("f32 (largest normal)", to_float(<<0x7f, 0x7f, 0xff, 0xff>>))
-      run_tests("f32 (smallest number < 1)", to_float(<<0x3f, 0x80, 0x00, 0x01>>))
-      run_tests("f32 (largest number < 1)", to_float(<<0x3f, 0x7f, 0xff, 0xff>>))
+      run_tests("f32 (largest normal)", to_float(<<0x7F, 0x7F, 0xFF, 0xFF>>))
+      run_tests("f32 (smallest number < 1)", to_float(<<0x3F, 0x80, 0x00, 0x01>>))
+      run_tests("f32 (largest number < 1)", to_float(<<0x3F, 0x7F, 0xFF, 0xFF>>))
       # run_tests("f32 (infinity)", to_float(<<0x7f, 0x80, 0x00, 0x00>>))
       # run_tests("f32 (-infinity)", to_float(<<0xff, 0x80, 0x00, 0x00>>))
     end
 
     test "f64" do
-      run_tests("f64 (0)", to_float(<<0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
-      run_tests("f64 (-0)", to_float(<<0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
-      run_tests("f64 (one)", to_float(<<0x3f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
-      run_tests("f64 (smallest subnormal)", to_float(<<0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01>>))
-      run_tests("f64 (largest subnormal)", to_float(<<0x00, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff>>))
-      run_tests("f64 (smallest normal)", to_float(<<0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
-      run_tests("f64 (largest normal)", to_float(<<0x7f, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff>>))
-      run_tests("f64 (smallest number < 1)", to_float(<<0x3f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01>>))
-      run_tests("f64 (largest number < 1)", to_float(<<0x3f, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff>>))
+      run_tests("f64 (0)", to_float(<<0x0000000000000000>>))
+      run_tests("f64 (-0)", to_float(<<0x8000, 0x000000000000>>))
+      run_tests("f64 (one)", to_float(<<0x3F80, 0x000000000000>>))
+      run_tests("f64 (smallest subnormal)", to_float(<<0x0000000000000001>>))
+      run_tests("f64 (largest subnormal)", to_float(<<0x007F, 0xFFFFFFFFFFFF>>))
+      run_tests("f64 (smallest normal)", to_float(<<0x0080, 0x000000000000>>))
+      run_tests("f64 (largest normal)", to_float(<<0x7F7F, 0xFFFFFFFFFFFF>>))
+      run_tests("f64 (smallest number < 1)", to_float(<<0x3F80, 0x000000000001>>))
+      run_tests("f64 (largest number < 1)", to_float(<<0x3F7F, 0xFFFFFFFFFFFF>>))
       # run_tests("f64 (infinity)", to_float(<<0x7f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
       # run_tests("f64 (-infinity)", to_float(<<0xff, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
     end
@@ -200,11 +200,11 @@ defmodule SerdeRustlerTests.NifTest do
     end
 
     test "newtype variant (Result::Ok(T), or {:ok, T})" do
-      run_tests("newtype variant (ok)", {:ok, 255})
+      run_tests("newtype variant (ok tuple)", {:ok, 255})
     end
 
     test "newtype variant (Result::Err(T), or {:error, T}" do
-      run_tests("newtype variant (error)", {:error, "error reason"})
+      run_tests("newtype variant (error tuple)", {:error, "error reason"})
     end
   end
 
@@ -271,22 +271,22 @@ defmodule SerdeRustlerTests.NifTest do
     actual_ser = SerdeRustlerTests.test("serialize", test_name, expected_term)
 
     assert actual_ser == :ok, ~s"""
-      serializing `#{test_name}`
+      SERIALIZATION :: #{test_name}
       expected: #{pretty_expected}, actual: #{print_err(actual_ser)}
     """
 
     actual_de = SerdeRustlerTests.test("deserialize", test_name, expected_term)
 
     assert actual_de == :ok, ~s"""
-      deserializing `#{test_name}`
+      DESERIALIZATION :: #{test_name}
       error: #{print_err(actual_de)}
     """
 
     round_trip = SerdeRustlerTests.round_trip(expected_term)
 
     assert round_trip == {:ok, expected_term}, ~s"""
-      round-tripping `#{test_name}`
-      expected: #{inspect(expected_term)}, received error: #{print_err(round_trip)}
+      ROUND-TRIP :: #{test_name}
+      expected: #{inspect(expected_term)}, received error: #{inspect(round_trip)}
     """
   end
 

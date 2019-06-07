@@ -1,7 +1,7 @@
 use crate::{atoms, error::Error, util};
 use rustler::{
-    types::{tuple, Binary, ListIterator, MapIterator},
-    Decoder, Term, TermType,
+    types::{ListIterator, MapIterator},
+    Term, TermType,
 };
 use serde::{
     de::{
@@ -33,33 +33,49 @@ impl<'a> From<Term<'a>> for Deserializer<'a> {
     }
 }
 
+macro_rules! try_parse_number {
+    ($term:expr, $type:ty, $visitor:expr, $visit_fn:ident) => {
+        if let Ok(num) = util::parse_number($term) as Result<$type, Error> {
+            return $visitor.$visit_fn(num);
+        }
+    };
+}
+
 impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     type Error = Error;
 
     // TODO
-    // TODO: perhaps get rid of this
+    #[inline]
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value, Error>
     where
         V: Visitor<'de>,
     {
         match self.term.get_type() {
-            // unit (nil)
-            // bool (t, f)
-            // unit struct (nil)
-            // unit variant (atom)
             TermType::Atom => {
                 if atoms::nil().eq(&self.term) {
+                    // unit (nil)
                     self.deserialize_unit(visitor)
                 } else if atoms::true_().eq(&self.term) || atoms::false_().eq(&self.term) {
+                    // bool (t, f)
                     self.deserialize_bool(visitor)
                 } else {
-                    let string = atoms::term_to_str(self.term).or(Err(Error::ExpectedAtom))?;
-                    visitor.visit_string(string)
+                    // unit variant (atom)
+                    let enum_type = EnumDeserializerType::Any;
+                    let de = EnumDeserializer::new(enum_type, self.term, &[], None)?;
+                    visitor.visit_enum(de)
+
+                    // let variant = atoms::term_to_str(self.term)?;
+                    // visitor.visit_string(variant)
                 }
             }
             // i8, i16, i32, i64, u8, u16, u32, u64, f32, f64 (i128, u128)
-            // TODO: blanket cast to isize or usize?
-            TermType::Number => Err(Error::TypeHintsRequired),
+            TermType::Number => {
+                try_parse_number!(self.term, f64, visitor, visit_f64);
+                try_parse_number!(self.term, i64, visitor, visit_i64);
+                try_parse_number!(self.term, u64, visitor, visit_u64);
+
+                Err(Error::ExpectedNumber)
+            }
             // char
             // string
             // byte array
@@ -119,77 +135,77 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        visitor.visit_i8(parse_number(self.term)?)
+        visitor.visit_i8(util::parse_number(self.term)?)
     }
 
     fn deserialize_i16<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_i16(parse_number(self.term)?)
+        visitor.visit_i16(util::parse_number(self.term)?)
     }
 
     fn deserialize_i32<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_i32(parse_number(self.term)?)
+        visitor.visit_i32(util::parse_number(self.term)?)
     }
 
     fn deserialize_i64<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_i64(parse_number(self.term)?)
+        visitor.visit_i64(util::parse_number(self.term)?)
     }
 
     fn deserialize_u8<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_u8(parse_number(self.term)?)
+        visitor.visit_u8(util::parse_number(self.term)?)
     }
 
     fn deserialize_u16<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_u16(parse_number(self.term)?)
+        visitor.visit_u16(util::parse_number(self.term)?)
     }
 
     fn deserialize_u32<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_u32(parse_number(self.term)?)
+        visitor.visit_u32(util::parse_number(self.term)?)
     }
 
     fn deserialize_u64<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_u64(parse_number(self.term)?)
+        visitor.visit_u64(util::parse_number(self.term)?)
     }
 
     fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_f32(parse_number(self.term)?)
+        visitor.visit_f32(util::parse_number(self.term)?)
     }
 
     fn deserialize_f64<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_f64(parse_number(self.term)?)
+        visitor.visit_f64(util::parse_number(self.term)?)
     }
 
     fn deserialize_char<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        validate_binary(self.term)?;
+        util::validate_binary(self.term)?;
         util::term_to_str(self.term)
             .or(Err(Error::ExpectedChar))
             .and_then(|string| {
@@ -205,8 +221,8 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        validate_binary(self.term)?;
-        let string = util::term_to_str(self.term)?;
+        util::validate_binary(self.term)?;
+        let string: &'a str = self.term.decode().or(Err(Error::ExpectedStringable))?;
         visitor.visit_borrowed_str(string)
     }
 
@@ -221,14 +237,14 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        visitor.visit_borrowed_bytes(parse_binary(self.term)?)
+        visitor.visit_borrowed_bytes(util::parse_binary(self.term)?)
     }
 
     fn deserialize_byte_buf<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_borrowed_bytes(parse_binary(self.term)?)
+        visitor.visit_borrowed_bytes(util::parse_binary(self.term)?)
     }
 
     fn deserialize_unit_struct<V>(
@@ -250,7 +266,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        let tuple = validate_tuple(self.term, Some(2))?;
+        let tuple = util::validate_tuple(self.term, Some(2))?;
         let name_term =
             atoms::str_to_term(self.term.get_env(), name).or(Err(Error::ExpectedStructName))?;
 
@@ -280,7 +296,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        let tuple = validate_tuple(self.term, Some(len))?;
+        let tuple = util::validate_tuple(self.term, Some(len))?;
         visitor.visit_seq(SequenceDeserializer::new(tuple.into_iter()))
     }
 
@@ -293,7 +309,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        let mut tuple = validate_tuple(self.term, Some(len + 1))?;
+        let mut tuple = util::validate_tuple(self.term, Some(len + 1))?;
         let name_term =
             atoms::str_to_term(self.term.get_env(), name).or(Err(Error::ExpectedStructName))?;
 
@@ -326,7 +342,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        validate_struct(self.term, Some(name))?;
+        util::validate_struct(self.term, Some(name))?;
 
         let iter = MapIterator::new(self.term).ok_or(Error::ExpectedStruct)?;
         visitor.visit_map(MapDeserializer::new(iter, true))
@@ -353,7 +369,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
             TermType::Number => Some((EnumDeserializerType::Unit, self.term)),
             // newtype or tuple variant
             TermType::Tuple => {
-                let tuple = validate_tuple(self.term, None)?;
+                let tuple = util::validate_tuple(self.term, None)?;
                 match tuple.len() {
                     0 | 1 => None,
                     2 => Some((EnumDeserializerType::Newtype, tuple[0])),
@@ -363,14 +379,14 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
             // struct variant
             TermType::Map => Some((
                 EnumDeserializerType::Struct,
-                validate_struct(self.term, None)?,
+                util::validate_struct(self.term, None)?,
             )),
             _ => None,
         };
 
         variant.ok_or(Error::ExpectedEnum).and_then(|variant| {
-            let (var_type, var_term) = variant;
-            let enum_de = EnumDeserializer::new(var_type, var_term, variants, Some(self.term))?;
+            let (vtype, term) = variant;
+            let enum_de = EnumDeserializer::new(vtype, term, variants, Some(self.term))?;
             visitor.visit_enum(enum_de)
         })
     }
@@ -462,20 +478,15 @@ where
     where
         K: DeserializeSeed<'de>,
     {
-        if let Some(_) = self.current_value {
+        if self.current_value.is_some() {
             panic!("MapDeserializer.next_key_seed was called twice in a row")
         }
 
         self.iter
             .next()
-            .map_or(None, |pair| {
-                let (key, _value) = pair;
-
-                if atoms::__struct__().eq(&key) {
-                    self.iter.next()
-                } else {
-                    Some(pair)
-                }
+            .and_then(|pair| match pair {
+                (key, _) if atoms::__struct__().eq(&key) => self.iter.next(),
+                pair => Some(pair),
             })
             .map_or(Ok(None), |pair| {
                 let (key, value) = pair;
@@ -505,6 +516,7 @@ where
 }
 
 enum EnumDeserializerType {
+    Any,
     Unit,
     Newtype,
     Tuple,
@@ -526,17 +538,27 @@ impl<'a> EnumDeserializer<'a> {
         term: Option<Term<'a>>,
     ) -> Result<Self, Error> {
         let var_de = VariantNameDeserializer::from(variant_term);
-        let variant: String = String::deserialize(var_de).or(Err(Error::InvalidVariantName))?;
+        let variant = String::deserialize(var_de).or(Err(Error::InvalidVariantName))?;
 
-        if variants.contains(&variant.as_str()) {
-            Ok(EnumDeserializer {
+        match variant_type {
+            EnumDeserializerType::Any => Ok(EnumDeserializer {
                 variant_type,
                 variant_term,
                 variant,
                 term,
-            })
-        } else {
-            Err(Error::InvalidVariantName)
+            }),
+            _ => {
+                if variants.contains(&variant.as_str()) {
+                    Ok(EnumDeserializer {
+                        variant_type,
+                        variant_term,
+                        variant,
+                        term,
+                    })
+                } else {
+                    Err(Error::InvalidVariantName)
+                }
+            }
         }
     }
 }
@@ -561,7 +583,7 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
     // is an atom or string
     fn unit_variant(self) -> Result<(), Error> {
         match self.variant_type {
-            EnumDeserializerType::Unit => Ok(()),
+            EnumDeserializerType::Any | EnumDeserializerType::Unit => Ok(()),
             _ => Err(Error::ExpectedUnitVariant),
         }
     }
@@ -572,9 +594,9 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
         T: DeserializeSeed<'de>,
     {
         match self.variant_type {
-            EnumDeserializerType::Newtype => {
+            EnumDeserializerType::Any | EnumDeserializerType::Newtype => {
                 if let Some(term) = self.term {
-                    let tuple = validate_tuple(term, Some(2))?;
+                    let tuple = util::validate_tuple(term, Some(2))?;
                     seed.deserialize(Deserializer::from(tuple[1]))
                 } else {
                     Err(Error::ExpectedNewtypeVariant)
@@ -590,9 +612,9 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
         V: Visitor<'de>,
     {
         match self.variant_type {
-            EnumDeserializerType::Tuple => {
+            EnumDeserializerType::Any | EnumDeserializerType::Tuple => {
                 if let Some(term) = self.term {
-                    let mut tuple = validate_tuple(term, Some(len + 1))?;
+                    let mut tuple = util::validate_tuple(term, Some(len + 1))?;
                     let iter = tuple.split_off(1).into_iter();
                     visitor.visit_seq(SequenceDeserializer::new(iter))
                 } else {
@@ -615,7 +637,7 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
         match self.variant_type {
             EnumDeserializerType::Struct => {
                 if let Some(term) = self.term {
-                    validate_struct(term, Some(&self.variant))?;
+                    util::validate_struct(term, Some(&self.variant))?;
                     let iter = MapIterator::new(term).ok_or(Error::ExpectedStruct)?;
                     visitor.visit_map(MapDeserializer::new(iter, true))
                 } else {
@@ -627,6 +649,7 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
     }
 }
 
+/// Deserializer for atoms and map keys.
 struct VariantNameDeserializer<'a> {
     variant: Term<'a>,
 }
@@ -644,17 +667,15 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for VariantNameDeserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        let variant = match self.variant.get_type() {
+        match self.variant.get_type() {
             TermType::Atom => {
                 let string = atoms::term_to_str(self.variant).or(Err(Error::InvalidVariantName))?;
-                Ok(string)
+                visitor.visit_string(string)
             }
-            TermType::Binary => Ok(String::from(util::term_to_str(self.variant)?)),
-            TermType::Number => Ok(String::from(util::term_to_str(self.variant)?)),
+            TermType::Binary => visitor.visit_string(util::term_to_str(self.variant)?),
+            TermType::Number => visitor.visit_string(util::term_to_str(self.variant)?),
             _ => Err(Error::ExpectedStringable),
-        }?;
-
-        visitor.visit_string(variant)
+        }
     }
 
     forward_to_deserialize_any! {
@@ -662,66 +683,4 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for VariantNameDeserializer<'a> {
             bytes byte_buf option unit unit_struct newtype_struct seq tuple
             tuple_struct map struct enum identifier ignored_any
     }
-}
-
-// TODO: perhaps use boundary checking to deserialize any number?
-fn parse_number<'a, T: Decoder<'a>>(term: Term<'a>) -> Result<T, Error> {
-    if !term.is_number() {
-        return Err(Error::InvalidNumber);
-    }
-
-    term.decode().or(Err(Error::ExpectedNumber))
-}
-
-// TODO: Binary or OwnedBinary?
-fn parse_binary<'a>(term: Term<'a>) -> Result<&'a [u8], Error> {
-    validate_binary(term)?;
-    let binary: Binary = term.decode().or(Err(Error::ExpectedBinary))?;
-    Ok(binary.as_slice())
-}
-
-fn validate_binary<'a>(term: Term<'a>) -> Result<(), Error> {
-    if !term.is_binary() {
-        Err(Error::ExpectedBinary)
-    } else {
-        Ok(())
-    }
-}
-
-fn validate_tuple<'a>(term: Term<'a>, len: Option<usize>) -> Result<Vec<Term<'a>>, Error> {
-    if !term.is_tuple() {
-        return Err(Error::ExpectedTuple);
-    }
-
-    let tuple = tuple::get_tuple(term).or(Err(Error::ExpectedTuple))?;
-    match len {
-        None => Ok(tuple),
-        Some(len) => {
-            if tuple.len() == len {
-                Ok(tuple)
-            } else {
-                Err(Error::InvalidTuple)
-            }
-        }
-    }
-}
-
-fn validate_struct<'a>(term: Term<'a>, name: Option<&str>) -> Result<Term<'a>, Error> {
-    if !term.is_map() {
-        return Err(Error::ExpectedMap);
-    }
-
-    let __struct__ = atoms::__struct__().to_term(term.get_env());
-    let struct_name_term = term.map_get(__struct__).or(Err(Error::ExpectedStruct))?;
-
-    if let Some(name) = name {
-        let name_term =
-            atoms::str_to_term(term.get_env(), name).or(Err(Error::InvalidStructName))?;
-
-        if struct_name_term.ne(&name_term) {
-            return Err(Error::ExpectedStruct);
-        }
-    }
-
-    Ok(struct_name_term)
 }

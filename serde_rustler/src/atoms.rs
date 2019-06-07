@@ -1,4 +1,4 @@
-use crate::{error::Error, util};
+use crate::Error;
 use rustler::{types::atom::Atom, Encoder, Env, Term};
 
 lazy_static! {
@@ -18,6 +18,7 @@ rustler_atoms! {
 /**
  * Attempts to create an atom term from the provided string (if the atom already exists in the atom table). If not, returns a string term.
  */
+#[inline]
 pub fn str_to_term<'a>(env: Env<'a>, string: &str) -> Result<Term<'a>, Error> {
     if string == "Ok" {
         Ok(ok().encode(env))
@@ -26,7 +27,7 @@ pub fn str_to_term<'a>(env: Env<'a>, string: &str) -> Result<Term<'a>, Error> {
     } else {
         match Atom::try_from_bytes(env, string.as_bytes()) {
             Ok(Some(term)) => Ok(term.encode(env)),
-            Ok(None) => util::str_to_term(env, string).or(Err(Error::InvalidStringable)),
+            Ok(None) => Err(Error::InvalidStringable),
             _ => Err(Error::InvalidStringable),
         }
     }
@@ -35,7 +36,8 @@ pub fn str_to_term<'a>(env: Env<'a>, string: &str) -> Result<Term<'a>, Error> {
 /**
  * Attempts to create a `String` from the term.
  */
-pub fn term_to_str<'a>(term: Term<'a>) -> Result<String, Error> {
+#[inline]
+pub fn term_to_str(term: Term) -> Result<String, Error> {
     if ok().eq(&term) {
         Ok(OK.to_string())
     } else if error().eq(&term) {
@@ -43,9 +45,6 @@ pub fn term_to_str<'a>(term: Term<'a>) -> Result<String, Error> {
     } else if term.is_atom() {
         term.atom_to_string().or(Err(Error::InvalidAtom))
     } else {
-        let string: String = util::term_to_str(term)
-            .or(Err(Error::InvalidStringable))?
-            .to_string();
-        Ok(string)
+        Err(Error::InvalidStringable)
     }
 }
