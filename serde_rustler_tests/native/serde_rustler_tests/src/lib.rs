@@ -23,23 +23,32 @@ use crate::types::{
 use rustler::{types::tuple, Encoder, Env, NifResult, Term};
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use serde_rustler::{atoms, from_term, to_term, Error};
+use serde_rustler::{atoms, from_term, to_term, Deserializer, Error, Serializer};
+use serde_transcode::transcode;
 use std::{collections::HashMap, error::Error as StdError};
 
 /// Implements the README example.
+#[inline]
 pub fn readme<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     tag_tuple(env, || {
         let animal: Animal = from_term(args[0])?;
+        println!("\nserialized README animal: {:?}", animal);
         to_term(env, animal)
     })
 }
 
 /// Deserializes anything from an Elixir term and subsequently serializes the result abck to an Elixir term, returning it.
+#[inline]
 pub fn round_trip<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    tag_tuple(env, || to_term(env, from_term(args[0])?))
+    tag_tuple(env, || {
+        let de = Deserializer::from(args[0]);
+        let ser = Serializer::from(env);
+        transcode(de, ser)
+    })
 }
 
 /// Serializes or deserializes a known Elixir term to/from a known Rust value, asserts that the resulting is equivalent to known term/value.
+#[inline]
 pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let test_type: &str = args[0].decode()?;
     let test_name: &str = args[1].decode()?;
@@ -59,14 +68,19 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 
         // Signed Integers
         "i8 (min)" => run_test!(i8::min_value()),
+        "i8 (0)" => run_test!(0 as i8),
         "i8 (max)" => run_test!(i8::max_value()),
         "i16 (min)" => run_test!(i16::min_value()),
+        "i16 (0)" => run_test!(0 as i16),
         "i16 (max)" => run_test!(i16::max_value()),
         "i32 (min)" => run_test!(i32::min_value()),
+        "i32 (0)" => run_test!(0 as i32),
         "i32 (max)" => run_test!(i32::max_value()),
         "i64 (min)" => run_test!(i64::min_value()),
+        "i64 (0)" => run_test!(0 as i64),
         "i64 (max)" => run_test!(i64::max_value()),
         "i128 (min)" => run_test!(i128::min_value()),
+        "i128 (0)" => run_test!(0 as i128),
         "i128 (max)" => run_test!(i128::max_value()),
 
         // Unsigned Integers
@@ -80,6 +94,32 @@ pub fn test<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
         "u64 (max)" => run_test!(u64::max_value()),
         "u128 (min)" => run_test!(u128::min_value()),
         "u128 (max)" => run_test!(u128::max_value()),
+
+        // Float32
+        "f32 (0)" => run_test!(f32::from_bits(0x00000000)),
+        "f32 (-0)" => run_test!(f32::from_bits(0x80000000)),
+        "f32 (one)" => run_test!(f32::from_bits(0x3f800000)),
+        "f32 (smallest subnormal)" => run_test!(f32::from_bits(0x00000001)),
+        "f32 (largest subnormal)" => run_test!(f32::from_bits(0x007fffff)),
+        "f32 (smallest normal)" => run_test!(f32::from_bits(0x00800000)),
+        "f32 (largest normal)" => run_test!(f32::from_bits(0x7f7fffff)),
+        "f32 (smallest number < 1)" => run_test!(f32::from_bits(0x3f800001)),
+        "f32 (largest number < 1)" => run_test!(f32::from_bits(0x3f7fffff)),
+        // "f32 (infinity)" => run_test!(f32::from_bits(0x7f800000)),
+        // "f32 (-infinity)" => run_test!(f32::from_bits(0xff800000)),
+
+        // Float64
+        "f64 (0)" => run_test!(f64::from_bits(0x0000000000000000)),
+        "f64 (-0)" => run_test!(f64::from_bits(0x8000000000000000)),
+        "f64 (one)" => run_test!(f64::from_bits(0x3f80000000000000)),
+        "f64 (smallest subnormal)" => run_test!(f64::from_bits(0x0000000000000001)),
+        "f64 (largest subnormal)" => run_test!(f64::from_bits(0x007fffffffffffff)),
+        "f64 (smallest normal)" => run_test!(f64::from_bits(0x0080000000000000)),
+        "f64 (largest normal)" => run_test!(f64::from_bits(0x7f7fffffffffffff)),
+        "f64 (smallest number < 1)" => run_test!(f64::from_bits(0x3f80000000000001)),
+        "f64 (largest number < 1)" => run_test!(f64::from_bits(0x3f7fffffffffffff)),
+        // "f64 (infinity)" => run_test!(f64::from_bits(0x7f80000000000000)),
+        // "f64 (-infinity)" => run_test!(f64::from_bits(0xff80000000000000)),
 
         // Chars, Strings and Binaries
         "char (empty)" => run_test!(0 as u8 as char),

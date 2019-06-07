@@ -76,28 +76,33 @@ defmodule SerdeRustlerTests.NifTest do
 
     test "i8" do
       run_tests("i8 (min)", -128)
+      run_tests("i8 (0)", 0)
       run_tests("i8 (max)", 127)
     end
 
     test "i16" do
       run_tests("i16 (min)", -32_768)
+      run_tests("i16 (0)", 0)
       run_tests("i16 (max)", 32_767)
     end
 
     test "i32" do
       run_tests("i32 (min)", -2_147_483_648)
+      run_tests("i32 (0)", 0)
       run_tests("i32 (max)", 2_147_483_647)
     end
 
     test "i64" do
       run_tests("i64 (min)", -9_223_372_036_854_775_808)
+      run_tests("i64 (0)", 0)
       run_tests("i64 (max)", 9_223_372_036_854_775_807)
     end
 
     @tag :skip
     test "i128" do
-      run_tests("i128 (min)", 100)
-      run_tests("i128 (max)", 100)
+      run_tests("i128 (min)", 0)
+      run_tests("128 (0)", 0)
+      run_tests("i128 (max)", 0)
     end
 
     test "u8" do
@@ -124,6 +129,34 @@ defmodule SerdeRustlerTests.NifTest do
     test "u128" do
       run_tests("u128 (min)", 100)
       run_tests("u128 (max)", 100)
+    end
+
+    test "f32" do
+      run_tests("f32 (0)", to_float(<<0x00, 0x00, 0x00, 0x00>>))
+      run_tests("f32 (-0)", to_float(<<0x80, 0x00, 0x00, 0x00>>))
+      run_tests("f32 (one)", to_float(<<0x3f, 0x80, 0x00, 0x00>>))
+      run_tests("f32 (smallest subnormal)", to_float(<<0x00, 0x00, 0x00, 0x01>>))
+      run_tests("f32 (largest subnormal)", to_float(<<0x00, 0x7f, 0xff, 0xff>>))
+      run_tests("f32 (smallest normal)", to_float(<<0x00, 0x80, 0x00, 0x00>>))
+      run_tests("f32 (largest normal)", to_float(<<0x7f, 0x7f, 0xff, 0xff>>))
+      run_tests("f32 (smallest number < 1)", to_float(<<0x3f, 0x80, 0x00, 0x01>>))
+      run_tests("f32 (largest number < 1)", to_float(<<0x3f, 0x7f, 0xff, 0xff>>))
+      # run_tests("f32 (infinity)", to_float(<<0x7f, 0x80, 0x00, 0x00>>))
+      # run_tests("f32 (-infinity)", to_float(<<0xff, 0x80, 0x00, 0x00>>))
+    end
+
+    test "f64" do
+      run_tests("f64 (0)", to_float(<<0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
+      run_tests("f64 (-0)", to_float(<<0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
+      run_tests("f64 (one)", to_float(<<0x3f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
+      run_tests("f64 (smallest subnormal)", to_float(<<0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01>>))
+      run_tests("f64 (largest subnormal)", to_float(<<0x00, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff>>))
+      run_tests("f64 (smallest normal)", to_float(<<0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
+      run_tests("f64 (largest normal)", to_float(<<0x7f, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff>>))
+      run_tests("f64 (smallest number < 1)", to_float(<<0x3f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01>>))
+      run_tests("f64 (largest number < 1)", to_float(<<0x3f, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff>>))
+      # run_tests("f64 (infinity)", to_float(<<0x7f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
+      # run_tests("f64 (-infinity)", to_float(<<0xff, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>))
     end
 
     @tag :skip
@@ -230,12 +263,16 @@ defmodule SerdeRustlerTests.NifTest do
     end
   end
 
+  defp to_float(<<float::big-signed-float-size(32)>>), do: float
+  defp to_float(<<float::big-signed-float-size(64)>>), do: float
+
   defp run_tests(test_name, expected_term) do
+    pretty_expected = inspect(expected_term)
     actual_ser = SerdeRustlerTests.test("serialize", test_name, expected_term)
 
     assert actual_ser == :ok, ~s"""
       serializing `#{test_name}`
-      expected: #{inspect(expected_term)}, actual: #{print_err(actual_ser)}
+      expected: #{pretty_expected}, actual: #{print_err(actual_ser)}
     """
 
     actual_de = SerdeRustlerTests.test("deserialize", test_name, expected_term)
