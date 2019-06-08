@@ -1,5 +1,5 @@
 use quick_error::quick_error;
-use rustler::{Error as NifError, Term};
+use rustler::Error as NifError;
 use serde::{de, ser};
 use std::{error::Error as StdError, fmt::Display};
 

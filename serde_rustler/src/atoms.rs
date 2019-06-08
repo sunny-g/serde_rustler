@@ -18,7 +18,6 @@ rustler_atoms! {
 /**
  * Attempts to create an atom term from the provided string (if the atom already exists in the atom table). If not, returns a string term.
  */
-#[inline]
 pub fn str_to_term<'a>(env: &Env<'a>, string: &str) -> Result<Term<'a>, Error> {
     if string == "Ok" {
         Ok(ok().encode(*env))
@@ -36,8 +35,7 @@ pub fn str_to_term<'a>(env: &Env<'a>, string: &str) -> Result<Term<'a>, Error> {
 /**
  * Attempts to create a `String` from the term.
  */
-#[inline]
-pub fn term_to_str(term: &Term) -> Result<String, Error> {
+pub fn term_to_string(term: &Term) -> Result<String, Error> {
     if ok().eq(term) {
         Ok(OK.to_string())
     } else if error().eq(term) {

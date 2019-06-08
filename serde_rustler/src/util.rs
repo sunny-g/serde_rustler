@@ -6,7 +6,7 @@ pub fn str_to_term<'a>(env: &Env<'a>, string: &str) -> Result<Term<'a>, Error> {
 }
 
 pub fn term_to_str(term: &Term) -> Result<String, Error> {
-    atoms::term_to_str(term)
+    atoms::term_to_string(term)
         .or(term.decode())
         .or(Err(Error::ExpectedStringable))
 }

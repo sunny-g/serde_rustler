@@ -22,13 +22,17 @@ serde_rustler = "0.0.2"
 ```rust
 #[macro_use] extern crate rustler;
 
+use serde::{Serialize, Deserialize}
 use serde_rustler::{from_term, to_term};
 
 rustler_export_nifs! {
     "Elixir.SerdeRustlerTests",
-    [("readme", 1, readme)],
+    [("nif", 1, nif)],
     None
 }
+
+#[derive(Serialize, Deserialize)]
+type Animal = ...;
 
 fn nif<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     // Deserialize term into a native Rust type.

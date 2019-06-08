@@ -14,13 +14,15 @@ use std::iter;
 
 /**
  * Converts a native Elixir term to a native Rust type.
+ *
+ * See [conversion table](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler#conversion-table) for details about deserialization behavior.
  */
+#[inline]
 pub fn from_term<'de, 'a: 'de, T>(term: Term<'a>) -> Result<T, Error>
 where
     T: Deserialize<'de>,
 {
-    let de = Deserializer::from(term);
-    T::deserialize(de)
+    T::deserialize(Deserializer::from(term))
 }
 
 pub struct Deserializer<'a> {
@@ -44,7 +46,7 @@ macro_rules! try_parse_number {
 impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     type Error = Error;
 
-    // TODO: deserializing some type from terms (i.e. tuples, records, structs, enums and variants) will currently fail
+    #[inline]
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value, Error>
     where
         V: Visitor<'de>,
@@ -59,7 +61,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
                     visitor.visit_bool(b)
                 } else {
                     // unit variant (atom)
-                    let string = atoms::term_to_str(&self.term)?;
+                    let string = atoms::term_to_string(&self.term)?;
                     visitor.visit_string(string)
                 }
             }
@@ -102,6 +104,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         }
     }
 
+    #[inline]
     fn deserialize_unit<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -113,6 +116,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         }
     }
 
+    #[inline]
     fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -120,6 +124,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_bool(util::parse_bool(&self.term)?)
     }
 
+    #[inline]
     fn deserialize_option<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -131,6 +136,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         }
     }
 
+    #[inline]
     fn deserialize_i8<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -138,6 +144,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_i8(util::parse_number(&self.term)?)
     }
 
+    #[inline]
     fn deserialize_i16<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -145,6 +152,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_i16(util::parse_number(&self.term)?)
     }
 
+    #[inline]
     fn deserialize_i32<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -152,6 +160,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_i32(util::parse_number(&self.term)?)
     }
 
+    #[inline]
     fn deserialize_i64<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -159,6 +168,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_i64(util::parse_number(&self.term)?)
     }
 
+    #[inline]
     fn deserialize_u8<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -166,6 +176,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_u8(util::parse_number(&self.term)?)
     }
 
+    #[inline]
     fn deserialize_u16<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -173,6 +184,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_u16(util::parse_number(&self.term)?)
     }
 
+    #[inline]
     fn deserialize_u32<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -180,6 +192,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_u32(util::parse_number(&self.term)?)
     }
 
+    #[inline]
     fn deserialize_u64<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -187,6 +200,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_u64(util::parse_number(&self.term)?)
     }
 
+    #[inline]
     fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -194,6 +208,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_f32(util::parse_number(&self.term)?)
     }
 
+    #[inline]
     fn deserialize_f64<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -201,6 +216,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_f64(util::parse_number(&self.term)?)
     }
 
+    #[inline]
     fn deserialize_char<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -217,6 +233,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
             })
     }
 
+    #[inline]
     fn deserialize_str<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -224,6 +241,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_borrowed_str(util::parse_str(self.term)?)
     }
 
+    #[inline]
     fn deserialize_string<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -231,6 +249,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         self.deserialize_str(visitor)
     }
 
+    #[inline]
     fn deserialize_bytes<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -238,6 +257,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_borrowed_bytes(util::parse_binary(self.term)?)
     }
 
+    #[inline]
     fn deserialize_byte_buf<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -257,6 +277,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         self.deserialize_unit(visitor)
     }
 
+    #[inline]
     fn deserialize_newtype_struct<V>(
         self,
         name: &'static str,
@@ -276,9 +297,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_newtype_struct(Deserializer::from(tuple[1]))
     }
 
-    // Deserialization of compound types like sequences and maps happens by
-    // passing the visitor an "Access" object that gives it the ability to
-    // iterate through the data contained in the sequence.
+    #[inline]
     fn deserialize_seq<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -291,6 +310,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_seq(SequenceDeserializer::new(iter))
     }
 
+    #[inline]
     fn deserialize_tuple<V>(self, len: usize, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -299,6 +319,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_seq(SequenceDeserializer::new(tuple.into_iter()))
     }
 
+    #[inline]
     fn deserialize_tuple_struct<V>(
         self,
         name: &'static str,
@@ -320,6 +341,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_seq(SequenceDeserializer::new(iter))
     }
 
+    #[inline]
     fn deserialize_map<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -332,6 +354,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_map(MapDeserializer::new(iter, None))
     }
 
+    #[inline]
     fn deserialize_struct<V>(
         self,
         name: &'static str,
@@ -346,11 +369,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_map(MapDeserializer::new(iter, Some(struct_name_term)))
     }
 
-    // could be...?
-    //  - unit variant      [enum var]              (atom)
-    //  - newtype variant   [enum var + val]        (tuple(var, T))
-    //  - tuple variant     [enum var + vals...]    (tuple(var, vals...))
-    //  - struct variant    [enum var + struct]     (struct(var, vals...))
+    #[inline]
     fn deserialize_enum<V>(
         self,
         _name: &'static str,
@@ -392,6 +411,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     }
 
     // TODO: is this right?
+    #[inline]
     fn deserialize_identifier<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
@@ -425,6 +445,7 @@ impl<'a, I> SequenceDeserializer<'a, I>
 where
     I: Iterator<Item = Term<'a>>,
 {
+    #[inline]
     fn new(iter: I) -> Self {
         SequenceDeserializer { iter: iter.fuse() }
     }
@@ -436,6 +457,7 @@ where
 {
     type Error = Error;
 
+    #[inline]
     fn next_element_seed<V>(&mut self, seed: V) -> Result<Option<V::Value>, Error>
     where
         V: DeserializeSeed<'de>,
@@ -460,6 +482,7 @@ impl<'a, I> MapDeserializer<'a, I>
 where
     I: Iterator,
 {
+    #[inline]
     fn new(iter: I, struct_name_term: Option<Term<'a>>) -> Self {
         MapDeserializer {
             struct_name_term,
@@ -475,6 +498,7 @@ where
 {
     type Error = Error;
 
+    #[inline]
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>, Error>
     where
         K: DeserializeSeed<'de>,
@@ -502,6 +526,7 @@ where
             })
     }
 
+    #[inline]
     fn next_value_seed<V>(&mut self, seed: V) -> Result<V::Value, Error>
     where
         V: DeserializeSeed<'de>,
@@ -532,6 +557,7 @@ struct EnumDeserializer<'a> {
 }
 
 impl<'a> EnumDeserializer<'a> {
+    #[inline]
     fn new(
         variant_type: EnumDeserializerType,
         variant_term: Term<'a>,
@@ -568,6 +594,7 @@ impl<'de, 'a: 'de> EnumAccess<'de> for EnumDeserializer<'a> {
     type Error = Error;
     type Variant = Self;
 
+    #[inline]
     fn variant_seed<V>(self, seed: V) -> Result<(V::Value, Self::Variant), Error>
     where
         V: DeserializeSeed<'de>,
@@ -581,7 +608,7 @@ impl<'de, 'a: 'de> EnumAccess<'de> for EnumDeserializer<'a> {
 impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
     type Error = Error;
 
-    // is an atom or string
+    #[inline]
     fn unit_variant(self) -> Result<(), Error> {
         match self.variant_type {
             EnumDeserializerType::Any | EnumDeserializerType::Unit => Ok(()),
@@ -589,7 +616,7 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
         }
     }
 
-    // is a tagged (len 2) tuple (starting with atom or string)
+    #[inline]
     fn newtype_variant_seed<T>(self, seed: T) -> Result<T::Value, Error>
     where
         T: DeserializeSeed<'de>,
@@ -607,7 +634,7 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
         }
     }
 
-    // is a tagged (len 3+) tuple (starting with atom or string)
+    #[inline]
     fn tuple_variant<V>(self, len: usize, visitor: V) -> Result<V::Value, Error>
     where
         V: Visitor<'de>,
@@ -626,7 +653,7 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
         }
     }
 
-    // is a struct, with atom or string struct_name
+    #[inline]
     fn struct_variant<V>(
         self,
         _fields: &'static [&'static str],
@@ -664,6 +691,7 @@ impl<'a> From<Term<'a>> for VariantNameDeserializer<'a> {
 impl<'de, 'a: 'de> de::Deserializer<'de> for VariantNameDeserializer<'a> {
     type Error = Error;
 
+    #[inline]
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value, Error>
     where
         V: Visitor<'de>,
@@ -671,7 +699,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for VariantNameDeserializer<'a> {
         match self.variant.get_type() {
             TermType::Atom => {
                 let string =
-                    atoms::term_to_str(&self.variant).or(Err(Error::InvalidVariantName))?;
+                    atoms::term_to_string(&self.variant).or(Err(Error::InvalidVariantName))?;
                 visitor.visit_string(string)
             }
             TermType::Binary => visitor.visit_string(util::term_to_str(&self.variant)?),
