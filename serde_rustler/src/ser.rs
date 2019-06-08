@@ -110,7 +110,6 @@ impl<'a> ser::Serializer for Serializer<'a> {
         Ok(v.encode(self.env))
     }
 
-
     // TODO: update rustler to support u128 and i128
     serde_if_integer128! {
         fn serialize_i128(self, _v: i128) -> Result<Self::Ok, Self::Error> {
@@ -124,7 +123,9 @@ impl<'a> ser::Serializer for Serializer<'a> {
 
     #[inline]
     fn serialize_char(self, v: char) -> Result<Self::Ok, Self::Error> {
-        self.serialize_str(&v.to_string())
+        let mut ser: SequenceSerializer = self.serialize_seq(Some(1))?;
+        ser::SerializeSeq::serialize_element(&mut ser, &(v as u32))?;
+        ser::SerializeSeq::end(ser)
     }
 
     #[inline]

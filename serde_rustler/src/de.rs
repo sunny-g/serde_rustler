@@ -67,9 +67,9 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
             }
             // i8, i16, i32, i64, u8, u16, u32, u64, f32, f64 (i128, u128)
             TermType::Number => {
-                try_parse_number!(self.term, f64, visitor, visit_f64);
-                try_parse_number!(self.term, i64, visitor, visit_i64);
                 try_parse_number!(self.term, u64, visitor, visit_u64);
+                try_parse_number!(self.term, i64, visitor, visit_i64);
+                try_parse_number!(self.term, f64, visitor, visit_f64);
 
                 Err(Error::ExpectedNumber)
             }
@@ -221,16 +221,22 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        util::validate_binary(&self.term)?;
-        util::term_to_str(&self.term)
-            .or(Err(Error::ExpectedChar))
-            .and_then(|string| {
-                if string.len() == 1 {
-                    visitor.visit_char(string.chars().next().unwrap())
-                } else {
-                    Err(Error::ExpectedChar)
-                }
-            })
+        if self.term.list_length().or(Err(Error::ExpectedChar))? != 1 {
+            return Err(Error::ExpectedChar);
+        }
+
+        let mut iter: ListIterator = self.term.decode().or(Err(Error::ExpectedList))?;
+        let c: Option<char> = iter
+            .next()
+            .unwrap()
+            .decode()
+            .map(std::char::from_u32)
+            .or(Err(Error::ExpectedChar))?;
+        if let Some(c) = c {
+            visitor.visit_char(c)
+        } else {
+            Err(Error::ExpectedChar)
+        }
     }
 
     #[inline]

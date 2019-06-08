@@ -49,6 +49,8 @@ defmodule SerdeRustlerTests.NifTest do
 
   use ExUnit.Case
 
+  alias SerdeRustlerTests.Helpers
+
   alias SerdeRustlerTests.NifTest.{
     NewtypeStruct,
     NewtypeVariant,
@@ -62,6 +64,15 @@ defmodule SerdeRustlerTests.NifTest do
   require NewtypeVariant.N
   require TupleStruct
   require TupleVariant.T
+
+  defp run_tests(test_name, expected_term, ctx) do
+    Helpers.run_ser(test_name, expected_term)
+    Helpers.run_de(test_name, expected_term)
+
+    unless ctx[:skip] == :transcode do
+      Helpers.run_transcode(test_name, expected_term)
+    end
+  end
 
   describe "Primitive Types:" do
     test "option", ctx do
@@ -127,79 +138,77 @@ defmodule SerdeRustlerTests.NifTest do
 
     @tag :skip
     test "u128", ctx do
-      run_tests("u128 (min)", 100, ctx)
-      run_tests("u128 (max)", 100, ctx)
+      run_tests("u128 (min)", 0, ctx)
+      run_tests("u128 (max)", 0, ctx)
     end
 
     test "f32", ctx do
-      test_case = to_float(<<0x00, 0x00, 0x00, 0x00>>)
+      test_case = Helpers.to_float(<<0x00, 0x00, 0x00, 0x00>>)
       run_tests("f32 (0)", test_case, ctx)
 
-      test_case = to_float(<<0x80, 0x00, 0x00, 0x00>>)
+      test_case = Helpers.to_float(<<0x80, 0x00, 0x00, 0x00>>)
       run_tests("f32 (-0)", test_case, ctx)
 
-      test_case = to_float(<<0x3F, 0x80, 0x00, 0x00>>)
+      test_case = Helpers.to_float(<<0x3F, 0x80, 0x00, 0x00>>)
       run_tests("f32 (one)", test_case, ctx)
 
-      test_case = to_float(<<0x00, 0x00, 0x00, 0x01>>)
+      test_case = Helpers.to_float(<<0x00, 0x00, 0x00, 0x01>>)
       run_tests("f32 (smallest subnormal)", test_case, ctx)
 
-      test_case = to_float(<<0x00, 0x7F, 0xFF, 0xFF>>)
+      test_case = Helpers.to_float(<<0x00, 0x7F, 0xFF, 0xFF>>)
       run_tests("f32 (largest subnormal)", test_case, ctx)
 
-      test_case = to_float(<<0x00, 0x80, 0x00, 0x00>>)
+      test_case = Helpers.to_float(<<0x00, 0x80, 0x00, 0x00>>)
       run_tests("f32 (smallest normal)", test_case, ctx)
 
-      test_case = to_float(<<0x7F, 0x7F, 0xFF, 0xFF>>)
+      test_case = Helpers.to_float(<<0x7F, 0x7F, 0xFF, 0xFF>>)
       run_tests("f32 (largest normal)", test_case, ctx)
 
-      test_case = to_float(<<0x3F, 0x80, 0x00, 0x01>>)
+      test_case = Helpers.to_float(<<0x3F, 0x80, 0x00, 0x01>>)
       run_tests("f32 (smallest number < 1)", test_case, ctx)
 
-      test_case = to_float(<<0x3F, 0x7F, 0xFF, 0xFF>>)
+      test_case = Helpers.to_float(<<0x3F, 0x7F, 0xFF, 0xFF>>)
       run_tests("f32 (largest number < 1)", test_case, ctx)
 
-      # run_tests("f32 (infinity)", to_float(<<0x7f, 0x80, 0x00, 0x00>>), ctx)
-      # run_tests("f32 (-infinity)", to_float(<<0xff, 0x80, 0x00, 0x00>>), ctx)
+      # run_tests("f32 (infinity)", Helpers.to_float(<<0x7f, 0x80, 0x00, 0x00>>), ctx)
+      # run_tests("f32 (-infinity)", Helpers.to_float(<<0xff, 0x80, 0x00, 0x00>>), ctx)
     end
 
     test "f64", ctx do
-      test_case = to_float(<<0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>)
+      test_case = Helpers.to_float(<<0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>)
       run_tests("f64 (0)", test_case, ctx)
 
-      test_case = to_float(<<0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>)
+      test_case = Helpers.to_float(<<0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>)
       run_tests("f64 (-0)", test_case, ctx)
 
-      test_case = to_float(<<0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>)
+      test_case = Helpers.to_float(<<0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>)
       run_tests("f64 (one)", test_case, ctx)
 
-      test_case = to_float(<<0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01>>)
+      test_case = Helpers.to_float(<<0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01>>)
       run_tests("f64 (smallest subnormal)", test_case, ctx)
 
-      test_case = to_float(<<0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF>>)
+      test_case = Helpers.to_float(<<0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF>>)
       run_tests("f64 (largest subnormal)", test_case, ctx)
 
-      test_case = to_float(<<0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>)
+      test_case = Helpers.to_float(<<0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00>>)
       run_tests("f64 (smallest normal)", test_case, ctx)
 
-      test_case = to_float(<<0x7F, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF>>)
+      test_case = Helpers.to_float(<<0x7F, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF>>)
       run_tests("f64 (largest normal)", test_case, ctx)
 
-      test_case = to_float(<<0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01>>)
+      test_case = Helpers.to_float(<<0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01>>)
       run_tests("f64 (smallest number < 1)", test_case, ctx)
 
-      test_case = to_float(<<0x3F, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF>>)
+      test_case = Helpers.to_float(<<0x3F, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF>>)
       run_tests("f64 (largest number < 1)", test_case, ctx)
 
-      # run_tests("f64 (infinity)", to_float(<<0x7f, 0x80, 0x00, 0x00, 0x00, 0x00,, ctx 0x00, 0x00>>))
-      # run_tests("f64 (-infinity)", to_float(<<0xff, 0x80, 0x00, 0x00, 0x00, 0x00,, ctx 0x00, 0x00>>))
+      # run_tests("f64 (infinity)", Helpers.to_float(<<0x7f, 0x80, 0x00, 0x00, 0x00, 0x00,, ctx 0x00, 0x00>>))
+      # run_tests("f64 (-infinity)", Helpers.to_float(<<0xff, 0x80, 0x00, 0x00, 0x00, 0x00,, ctx 0x00, 0x00>>))
     end
 
-    @tag :skip
     test "chars", ctx do
-      # TODO: should be charlist type
-      run_tests("char (empty)", '', ctx)
-      # run_tests("char", '', ctx)
+      run_tests("char (ascii)", 'A', ctx)
+      run_tests("char (replacement)", '�', ctx)
     end
 
     test "strings", ctx do
@@ -213,10 +222,6 @@ defmodule SerdeRustlerTests.NifTest do
   end
 
   describe "Unit Types:" do
-    setup do
-      {:ok, skip: :transcode}
-    end
-
     test "unit", ctx do
       run_tests("unit", nil, ctx)
     end
@@ -226,37 +231,44 @@ defmodule SerdeRustlerTests.NifTest do
     end
 
     test "unit variant", ctx do
-      run_tests("unit variant", :"UnitVariant::A", ctx)
+      test_case = :"UnitVariant::A"
+      transcoded = "UnitVariant::A"
+      run_tests("unit variant", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("unit variant", test_case, transcoded)
     end
   end
 
   describe "Newtype Types:" do
-    setup do
-      {:ok, skip: :transcode}
-    end
-
     test "newtype struct", ctx do
-      run_tests("newtype struct", NewtypeStruct.record(num: 255), ctx)
+      test_case = NewtypeStruct.record(num: 255)
+      transcoded = [~s"#{NewtypeStruct}", 255]
+      run_tests("newtype struct", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("newtype struct", test_case, transcoded)
     end
 
     test "newtype variant", ctx do
-      run_tests("newtype variant", NewtypeVariant.N.record(num: 255), ctx)
+      test_case = NewtypeVariant.N.record(num: 255)
+      transcoded = [~s"#{NewtypeVariant.N}", 255]
+      run_tests("newtype variant", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("newtype struct", test_case, transcoded)
     end
 
     test "newtype variant (Result::Ok(T), or {:ok, T})", ctx do
-      run_tests("newtype variant (ok tuple)", {:ok, 255}, ctx)
+      test_case = {:ok, 255}
+      transcoded = ["Ok", 255]
+      run_tests("newtype variant (ok tuple)", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("newtype variant (ok tuple)", test_case, transcoded)
     end
 
     test "newtype variant (Result::Err(T), or {:error, T}", ctx do
-      run_tests("newtype variant (error tuple)", {:error, "error reason"}, ctx)
+      test_case = {:error, "error reason"}
+      transcoded = ["Err", "error reason"]
+      run_tests("newtype variant (error tuple)", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("newtype variant (error tuple)", test_case, transcoded)
     end
   end
 
   describe "Sequences:" do
-    setup do
-      {:ok, skip: :transcode}
-    end
-
     test "sequences (empty)", ctx do
       run_tests("sequences (empty)", [], ctx)
     end
@@ -266,99 +278,73 @@ defmodule SerdeRustlerTests.NifTest do
     end
 
     test "sequences (complex)", ctx do
-      list = [NewtypeStruct.record(num: 0), NewtypeStruct.record(num: 255)]
-      run_tests("sequences (complex)", list, ctx)
+      test_case = [NewtypeStruct.record(num: 0), NewtypeStruct.record(num: 255)]
+      transcoded = [[~s"#{NewtypeStruct}", 0], [~s"#{NewtypeStruct}", 255]]
+      run_tests("sequences (complex)", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("sequences (complex)", test_case, transcoded)
     end
   end
 
   describe "Tuple Types:" do
-    setup do
-      {:ok, skip: :transcode}
-    end
-
     test "tuple (empty)", ctx do
       run_tests("tuple (empty)", nil, ctx)
     end
 
     test "tuple", ctx do
-      run_tests("tuple", {0, 255}, ctx)
+      test_case = {0, 255}
+      transcoded = [0, 255]
+      run_tests("tuple", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("tuple", test_case, transcoded)
     end
 
     test "tuple struct", ctx do
-      run_tests("tuple struct", TupleStruct.record(r: 0, g: 128, b: 255), ctx)
+      test_case = TupleStruct.record(r: 0, g: 128, b: 255)
+      transcoded = [~s"#{TupleStruct}", 0, 128, 255]
+      run_tests("tuple struct", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("tuple struct", test_case, transcoded)
     end
 
     test "tuple variant", ctx do
-      run_tests("tuple variant", TupleVariant.T.record(a: 0, b: 255), ctx)
+      test_case = TupleVariant.T.record(a: 0, b: 255)
+      transcoded = [~s"#{TupleVariant.T}", 0, 255]
+      run_tests("tuple variant", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("tuple variant", test_case, transcoded)
     end
   end
 
   describe "Map and Struct Types:" do
-    setup do
-      {:ok, skip: :transcode}
-    end
-
     test "map (primitive)", ctx do
       simple_map = %{"key" => "hello", "val" => "world"}
       run_tests("map (primitive)", simple_map, ctx)
     end
 
     test "map (complex)", ctx do
-      complex_map = %{
+      test_case = %{
         "key" => %Struct{r: 0, g: 0, b: 0},
         "val" => %Struct{r: 255, g: 255, b: 255}
       }
 
-      run_tests("map (complex)", complex_map, ctx)
+      transcoded = %{
+        "key" => %{"r" => 0, "g" => 0, "b" => 0},
+        "val" => %{"r" => 255, "g" => 255, "b" => 255}
+      }
+
+      run_tests("map (complex)", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("map (complex)", test_case, transcoded)
     end
 
     test "struct", ctx do
-      struct = %Struct{r: 0, g: 128, b: 255}
-      run_tests("struct", struct, ctx)
+      test_case = %Struct{r: 0, g: 128, b: 255}
+      transcoded = %{"r" => 0, "g" => 128, "b" => 255}
+      run_tests("struct", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("struct", test_case, transcoded)
     end
 
     test "struct variant", ctx do
-      struct_variant = %StructVariant.S{r: 0, g: 128, b: 255}
-      run_tests("struct variant", struct_variant, ctx)
+      test_case = %StructVariant.S{r: 0, g: 128, b: 255}
+      transcoded = %{"r" => 0, "g" => 128, "b" => 255}
+      run_tests("struct variant", test_case, Helpers.skip(ctx, :transcode))
+      Helpers.run_transcode("struct variant", test_case, transcoded)
     end
   end
-
-  defp to_float(<<float::big-signed-float-size(32)>>), do: float
-  defp to_float(<<float::big-signed-float-size(64)>>), do: float
-
-  defp run_tests(test_name, expected_term, ctx) do
-    pretty_expected = inspect(expected_term)
-    serialized = SerdeRustlerTests.test("serialize", test_name, expected_term)
-
-    assert serialized == :ok, ~s"""
-      SERIALIZATION :: #{test_name}
-      expected: #{pretty_expected}
-      actual: #{inspect_serde(serialized)}
-    """
-
-    deserialized = SerdeRustlerTests.test("deserialize", test_name, expected_term)
-
-    assert deserialized == :ok, ~s"""
-      DESERIALIZATION :: #{test_name}
-      term: #{pretty_expected}
-      error: #{inspect_serde(deserialized)}
-    """
-
-    unless ctx[:skip] == :transcode do
-      transcoded = SerdeRustlerTests.transcode(expected_term)
-
-      assert transcoded == {:ok, expected_term}, ~s"""
-        TRANSCODE :: #{test_name}
-        expected: #{inspect(expected_term)}
-        #{inspect_transcode(transcoded)}
-      """
-    end
-  end
-
-  defp inspect_serde(:ok), do: ""
-  defp inspect_serde({:ok, _}), do: ""
-  defp inspect_serde({:error, term}), do: inspect(term)
-
-  defp inspect_transcode({:ok, term}), do: "actual: #{inspect(term)}"
-  defp inspect_transcode({:error, reason}), do: "received error: #{inspect(reason)}"
 end

@@ -34,30 +34,54 @@ defmodule SerdeRustlerTests.Mixfile do
     ]
   end
 
+  def application do
+    spec = [extra_applications: []]
+
+    if Mix.env() == :bench do
+      Keyword.put_new(spec, :applications, [:logger])
+    else
+      spec
+    end
+  end
+
   defp deps() do
     [ {:rustler,        "~> 0.20.0"},
     ]
   end
 
   defp dev_deps() do
-    [ {:credo,          "~> 1.0.0", only: [:dev, :test], runtime: false},
-      {:dialyxir,       "~> 0.5",   only: [:dev],        runtime: false},
-      {:excoveralls,    "~> 0.10",  only: [:test]},
-      {:ex_doc,         "~> 0.19",  only: [:dev],        runtime: false},
-      {:inch_ex, github: "rrrene/inch_ex", only: [:dev, :test], runtime: false},
-      {:mix_test_watch, "~> 0.8",   only: [:dev],        runtime: false},
+    [ {:benchee,          "~> 1.0",   only: [:bench]},
+      {:benchee_html,     "~> 1.0",   only: [:bench]},
+      {:benchee_markdown, "~> 0.2",   only: [:bench]},
+      {:credo,            "~> 1.0.0", only: [:dev, :test],  runtime: false},
+      {:dialyxir,         "~> 0.5",   only: [:dev],         runtime: false},
+      {:excoveralls,      "~> 0.10",  only: [:test]},
+      {:ex_doc,           "~> 0.19",  only: [:dev],         runtime: false},
+      {:mix_test_watch,   "~> 0.8",   only: [:dev],         runtime: false},
+      # JSON serialization libs for benchmarks
+      {:exjsx,            "~> 4.0",   only: [:bench]},
+      {:jason,            "~> 1.1",   only: [:dev, :test, :bench]},
+      {:jiffy,            "~> 0.15",  only: [:bench]},
+      {:json,             "~> 1.2",   only: [:bench]},
+      {:jsone,            "~> 1.4",   only: [:bench]},
+      {:poison,           "~> 4.0",   only: [:test, :bench]},
+      {:tiny,             "~> 1.0",   only: [:bench]},
     ]
   end
 
   defp rustler_crates do
     [ serde_rustler_tests:
       [ path:             __DIR__ <> "/native/serde_rustler_tests",
-        mode:             (if Mix.env() == :prod, do: :release, else: :debug),
+        mode:             rustler_mode(Mix.env()),
         default_features: true,
         features:         [],
       ]
     ]
   end
+
+  defp rustler_mode(:bench), do: :release
+  defp rustler_mode(:prod), do: :release
+  defp rustler_mode(_), do: :debug
 
   defp package do
     [ name:        @name,

@@ -18,36 +18,36 @@ pub struct Animal {
     owner: Option<String>,
 }
 
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Unit;
 
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum UnitVariant {
     #[serde(rename = "UnitVariant::A")]
     A,
 }
 
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum NewtypeVariant {
     #[serde(rename = "Elixir.SerdeRustlerTests.NifTest.NewtypeVariant.N")]
     N(u8),
 }
 
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename = "Elixir.SerdeRustlerTests.NifTest.NewtypeStruct")]
 pub struct NewtypeStruct(pub u8);
 
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename = "Elixir.SerdeRustlerTests.NifTest.TupleStruct")]
 pub struct TupleStruct(pub u8, pub u8, pub u8);
 
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum TupleVariant {
     #[serde(rename = "Elixir.SerdeRustlerTests.NifTest.TupleVariant.T")]
     T(u8, u8),
 }
 
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename = "Elixir.SerdeRustlerTests.NifTest.Struct")]
 pub struct Struct {
     pub r: u8,
@@ -55,7 +55,7 @@ pub struct Struct {
     pub b: u8,
 }
 
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum StructVariant {
     #[serde(rename = "Elixir.SerdeRustlerTests.NifTest.StructVariant.S")]
     S { r: u8, g: u8, b: u8 },
