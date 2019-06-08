@@ -19,7 +19,29 @@ serde_rustler = "0.0.2"
 
 ## API Overview
 
-Below is an example of how you might use `serde_rustler` within a rust NIF:
+```rust
+#[macro_use] extern crate rustler;
+
+use serde_rustler::{from_term, to_term};
+
+rustler_export_nifs! {
+    "Elixir.SerdeRustlerTests",
+    [("readme", 1, readme)],
+    None
+}
+
+fn nif<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    // Deserialize term into a native Rust type.
+    let animal: Animal = from_term(args[0])?;
+
+    // Serialize a type into an Elixir term.
+    to_term(env, animal).map_err(|err| err.into())
+}
+```
+
+## Usage
+
+Below is a more comprehensive example of how you might use `serde_rustler` within a rust NIF...
 
 ```rust
 #[macro_use]
@@ -59,15 +81,13 @@ struct Animal {
 }
 
 fn readme<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let animal: Animal = from_term(args[0]).or(Err(NifError::BadArg))?;
-
+    let animal: Animal = from_term(args[0])?;
     println!("serialized animal: {:?}", animal);
-
-    to_term(env, animal).or(Err(NifError::BadArg))
+    to_term(env, animal).map_err(|err| err.into())
 }
 ```
 
-Corresponding Elixir code (code structure, `import`s, `alias`es and `require`s simplified or omitted for brevity):
+... and how you might structure your corresponding Elixir types (code structure, `import`s, `alias`es and `require`s simplified or omitted for brevity):
 
 ```elixir
 defmodule SerdeNif do
@@ -84,7 +104,10 @@ defmodule SerdeNif do
     }
     defstruct type: Cat.record(), name: "", age: 0, owner: nil
 
-    @doc "Deserializes term as a Rust `Animal` struct, then serializes it back into an Elixir `Animal` struct. Should return true."
+    @doc """
+    Deserializes term as a Rust `Animal` struct, then serializes it back into
+    an Elixir `Animal` struct. Should return true.
+    """
     def test() do
       animal = %Animal{
         type: Animal.Cat.record(),
@@ -103,9 +126,7 @@ defmodule SerdeNif do
   end
 
   defmodule AnimalType.Dog do
-    require Record
-    @type t {__MODULE__, String.t()}
-    Record.defrecord(:record, :Dog, breed: "mutt")
+    # omitted
   end
 end
 ```

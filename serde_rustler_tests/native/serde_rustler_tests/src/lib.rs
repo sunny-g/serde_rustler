@@ -29,11 +29,9 @@ use std::{collections::HashMap, error::Error as StdError};
 /// Implements the README example.
 #[inline]
 pub fn readme<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    tag_tuple(env, || {
-        let animal: Animal = from_term(args[0])?;
-        println!("\n deserialized animal from README: {:?}", animal);
-        to_term(env, animal)
-    })
+    let animal: Animal = from_term(args[0])?;
+    println!("\n deserialized animal from README: {:?}", animal);
+    to_term(env, animal).map_err(|err| err.into())
 }
 
 /// Deserializes anything from an Elixir term and subsequently serializes the result abck to an Elixir term, returning it.

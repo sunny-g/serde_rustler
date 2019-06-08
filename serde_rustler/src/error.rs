@@ -1,6 +1,7 @@
 use quick_error::quick_error;
+use rustler::{Error as NifError, Term};
 use serde::{de, ser};
-use std::fmt::Display;
+use std::{error::Error as StdError, fmt::Display};
 
 quick_error! {
     #[derive(Debug)]
@@ -112,6 +113,12 @@ quick_error! {
         InvalidStructKey {
             description("Failed to serialize struct key")
         }
+    }
+}
+
+impl From<Error> for NifError {
+    fn from(err: Error) -> NifError {
+        NifError::RaiseTerm(Box::new(String::from(err.description())))
     }
 }
 

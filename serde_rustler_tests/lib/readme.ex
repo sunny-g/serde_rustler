@@ -44,7 +44,7 @@ defmodule SerdeRustlerTests.Readme do
 
   ## Examples:
       iex> readme()
-      {:ok, animal()}
+      animal()
   """
   def readme(), do: SerdeRustlerTests.readme(animal())
 
