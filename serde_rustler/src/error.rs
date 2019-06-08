@@ -52,7 +52,7 @@ quick_error! {
             description("Expected to deserialize char")
         }
         ExpectedStringable {
-            description("Expected to deserialize a stringable term")
+            description("Expected to deserialize a UTF-8 stringable term")
         }
         ExpectedNil {
             description("Expected to deserialize nil")

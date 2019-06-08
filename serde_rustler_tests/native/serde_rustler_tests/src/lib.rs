@@ -10,8 +10,8 @@ mod types;
 rustler_export_nifs! {
     "Elixir.SerdeRustlerTests",
     [   ("readme", 1, readme),
-        ("round_trip", 1, round_trip),
         ("test", 3, test),
+        ("transcode", 1, transcode),
     ],
     None
 }
@@ -24,7 +24,6 @@ use rustler::{types::tuple, Encoder, Env, NifResult, Term};
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
 use serde_rustler::{atoms, from_term, to_term, Deserializer, Error, Serializer};
-use serde_transcode::transcode;
 use std::{collections::HashMap, error::Error as StdError};
 
 /// Implements the README example.
@@ -39,9 +38,11 @@ pub fn readme<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 
 /// Deserializes anything from an Elixir term and subsequently serializes the result abck to an Elixir term, returning it.
 #[inline]
-pub fn round_trip<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+pub fn transcode<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     tag_tuple(env, || {
-        transcode(Deserializer::from(args[0]), Serializer::from(env))
+        let de = Deserializer::from(args[0]);
+        let ser = Serializer::from(env);
+        serde_transcode::transcode(de, ser)
     })
 }
 

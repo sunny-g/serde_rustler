@@ -73,7 +73,7 @@ Corresponding Elixir code (code structure, `import`s, `alias`es and `require`s s
 defmodule SerdeNif do
   use Rustler, otp_app: :serde_nif
 
-  def round_trip(_term), do: :erlang.nif_error(:nif_not_loaded)
+  def readme(_term), do: :erlang.nif_error(:nif_not_loaded)
 
   defmodule Animal do
     @type t :: %Animal{

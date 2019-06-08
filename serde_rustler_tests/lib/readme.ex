@@ -43,17 +43,17 @@ defmodule SerdeRustlerTests.Readme do
   Round-trips an `t:Animal.t/0` struct using NIF-defined type hints.
 
   ## Examples:
-      iex> #{__MODULE__}.test()
-      {:ok, #{__MODULE__}.animal()}
+      iex> readme()
+      {:ok, animal()}
   """
-  def test(), do: SerdeRustlerTests.readme(@animal)
+  def readme(), do: SerdeRustlerTests.readme(animal())
 
   @doc """
-  Round-trips an `t:Animal.t/0` struct using `serde-transcode`.
+  Transcodes an `t:Animal.t/0` struct using `serde-transcode`.
 
   ## Examples:
-      iex> #{__MODULE__}.round_trip()
-      {:ok, #{__MODULE__}.animal()}
+      iex> transcode()
+      {:ok, animal()}
   """
-  def round_trip(), do: SerdeRustlerTests.round_trip(@animal)
+  def transcode(), do: SerdeRustlerTests.transcode(animal())
 end

@@ -127,7 +127,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         _variant_index: u32,
         variant: &'static str,
     ) -> Result<Self::Ok, Self::Error> {
-        util::str_to_term(self.env, variant).or(Err(Error::InvalidVariantName))
+        util::str_to_term(&self.env, variant).or(Err(Error::InvalidVariantName))
     }
 
     /// Serializes `struct Millimeters(u8)` as a tagged tuple: `{:Millimeters, u8}` or `{"Millimeters", u8}`, depending on if the atom `:Millimeters` has already been created.
@@ -139,7 +139,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
     where
         T: ?Sized + ser::Serialize,
     {
-        let name_term = util::str_to_term(self.env, name).or(Err(Error::InvalidVariantName))?;
+        let name_term = util::str_to_term(&self.env, name).or(Err(Error::InvalidVariantName))?;
         let mut ser = SequenceSerializer::new(self, Some(2), Some(name_term));
         ser.add(value.serialize(self)?);
         ser.to_tuple()
@@ -180,7 +180,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeTupleStruct, Self::Error> {
-        let name_term = util::str_to_term(self.env, name).or(Err(Error::InvalidVariantName))?;
+        let name_term = util::str_to_term(&self.env, name).or(Err(Error::InvalidVariantName))?;
         Ok(SequenceSerializer::new(self, Some(len), Some(name_term)))
     }
 
@@ -206,7 +206,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeStruct, Self::Error> {
-        let name_term = util::str_to_term(self.env, name).or(Err(Error::InvalidStructName))?;
+        let name_term = util::str_to_term(&self.env, name).or(Err(Error::InvalidStructName))?;
         Ok(MapSerializer::new(self, Some(len), Some(name_term)))
     }
 
@@ -219,6 +219,40 @@ impl<'a> ser::Serializer for Serializer<'a> {
         len: usize,
     ) -> Result<Self::SerializeStructVariant, Self::Error> {
         self.serialize_struct(variant, len)
+    }
+}
+
+/**
+ *
+ */
+pub struct SequenceSerializer<'a> {
+    ser: Serializer<'a>,
+    items: Vec<Term<'a>>,
+}
+impl<'a> SequenceSerializer<'a> {
+    fn new(ser: Serializer<'a>, len: Option<usize>, name: Option<Term<'a>>) -> Self {
+        let mut items = match len {
+            None => Vec::new(),
+            Some(length) => Vec::with_capacity(length),
+        };
+
+        if let Some(name_term) = name {
+            items.push(name_term);
+        }
+
+        SequenceSerializer { ser, items }
+    }
+
+    fn add(&mut self, term: Term<'a>) {
+        self.items.push(term)
+    }
+
+    fn to_list(&self) -> Result<Term<'a>, Error> {
+        Ok(self.items.encode(self.ser.env))
+    }
+
+    fn to_tuple(&self) -> Result<Term<'a>, Error> {
+        Ok(tuple::make_tuple(self.ser.env, &self.items))
     }
 }
 
@@ -288,108 +322,6 @@ impl<'a> ser::SerializeTupleVariant for SequenceSerializer<'a> {
     }
 }
 
-impl<'a> ser::SerializeMap for MapSerializer<'a> {
-    type Ok = Term<'a>;
-    type Error = Error;
-
-    fn serialize_key<T>(&mut self, _value: &T) -> Result<(), Error>
-    where
-        T: ?Sized + Serialize,
-    {
-        panic!("Not Implemented")
-    }
-
-    fn serialize_value<T>(&mut self, _value: &T) -> Result<(), Error>
-    where
-        T: ?Sized + Serialize,
-    {
-        panic!("Not Implemented")
-    }
-
-    fn serialize_entry<K: ?Sized, V: ?Sized>(&mut self, key: &K, value: &V) -> Result<(), Error>
-    where
-        K: Serialize,
-        V: Serialize,
-    {
-        self.add_key(key.serialize(self.ser)?);
-        self.add_val(value.serialize(self.ser)?);
-        Ok(())
-    }
-
-    fn end(self) -> Result<Term<'a>, Error> {
-        self.to_map()
-    }
-}
-
-impl<'a> ser::SerializeStruct for MapSerializer<'a> {
-    type Ok = Term<'a>;
-    type Error = Error;
-
-    fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), Error>
-    where
-        T: ?Sized + Serialize,
-    {
-        let key_term = util::str_to_term(self.ser.env, key).or(Err(Error::InvalidStructKey))?;
-        self.add_key(key_term);
-        self.add_val(value.serialize(self.ser)?);
-        Ok(())
-    }
-
-    fn end(self) -> Result<Term<'a>, Error> {
-        self.to_struct()
-    }
-}
-
-impl<'a> ser::SerializeStructVariant for MapSerializer<'a> {
-    type Ok = Term<'a>;
-    type Error = Error;
-
-    fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), Error>
-    where
-        T: ?Sized + Serialize,
-    {
-        ser::SerializeStruct::serialize_field(self, key, value)
-    }
-
-    fn end(self) -> Result<Term<'a>, Error> {
-        ser::SerializeStruct::end(self)
-    }
-}
-
-/**
- *
- */
-pub struct SequenceSerializer<'a> {
-    ser: Serializer<'a>,
-    items: Vec<Term<'a>>,
-}
-impl<'a> SequenceSerializer<'a> {
-    fn new(ser: Serializer<'a>, len: Option<usize>, name: Option<Term<'a>>) -> Self {
-        let mut items = match len {
-            None => Vec::new(),
-            Some(length) => Vec::with_capacity(length),
-        };
-
-        if let Some(name_term) = name {
-            items.push(name_term);
-        }
-
-        SequenceSerializer { ser, items }
-    }
-
-    fn add(&mut self, term: Term<'a>) {
-        self.items.push(term)
-    }
-
-    fn to_list(&self) -> Result<Term<'a>, Error> {
-        Ok(self.items.encode(self.ser.env))
-    }
-
-    fn to_tuple(&self) -> Result<Term<'a>, Error> {
-        Ok(tuple::make_tuple(self.ser.env, &self.items))
-    }
-}
-
 /**
  *
  */
@@ -418,11 +350,19 @@ impl<'a> MapSerializer<'a> {
     }
 
     fn add_key(&mut self, term: Term<'a>) {
-        self.keys.push(term)
+        if self.keys.len() == self.values.len() {
+            self.keys.push(term)
+        } else {
+            panic!("MapSerializer.serialize_key was called twice in a row")
+        }
     }
 
     fn add_val(&mut self, term: Term<'a>) {
-        self.values.push(term)
+        if self.keys.len() == self.values.len() + 1 {
+            self.values.push(term)
+        } else {
+            panic!("MapSerializer.serialize_value was called incorrectly")
+        }
     }
 
     fn to_map(&self) -> Result<Term<'a>, Error> {
@@ -431,10 +371,70 @@ impl<'a> MapSerializer<'a> {
 
     fn to_struct(&self) -> Result<Term<'a>, Error> {
         let struct_atom = atoms::__struct__().to_term(self.ser.env);
-        let module_term = self.name.ok_or(Error::InvalidStructName)?;
+        let module_term = self.name.ok_or(Error::ExpectedStructName)?;
         self.to_map()
             .or(Err(Error::InvalidStruct))?
             .map_put(struct_atom, module_term)
             .or(Err(Error::InvalidStruct))
+    }
+}
+
+impl<'a> ser::SerializeMap for MapSerializer<'a> {
+    type Ok = Term<'a>;
+    type Error = Error;
+
+    fn serialize_key<T>(&mut self, key: &T) -> Result<(), Error>
+    where
+        T: ?Sized + Serialize,
+    {
+        self.add_key(key.serialize(self.ser)?);
+        Ok(())
+    }
+
+    fn serialize_value<T>(&mut self, value: &T) -> Result<(), Error>
+    where
+        T: ?Sized + Serialize,
+    {
+        self.add_val(value.serialize(self.ser)?);
+        Ok(())
+    }
+
+    fn end(self) -> Result<Term<'a>, Error> {
+        self.to_map()
+    }
+}
+
+impl<'a> ser::SerializeStruct for MapSerializer<'a> {
+    type Ok = Term<'a>;
+    type Error = Error;
+
+    fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), Error>
+    where
+        T: ?Sized + Serialize,
+    {
+        let key_term = atoms::str_to_term(&self.ser.env, key).or(Err(Error::InvalidStructKey))?;
+        self.add_key(key_term);
+        self.add_val(value.serialize(self.ser)?);
+        Ok(())
+    }
+
+    fn end(self) -> Result<Term<'a>, Error> {
+        self.to_struct()
+    }
+}
+
+impl<'a> ser::SerializeStructVariant for MapSerializer<'a> {
+    type Ok = Term<'a>;
+    type Error = Error;
+
+    fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), Error>
+    where
+        T: ?Sized + Serialize,
+    {
+        ser::SerializeStruct::serialize_field(self, key, value)
+    }
+
+    fn end(self) -> Result<Term<'a>, Error> {
+        ser::SerializeStruct::end(self)
     }
 }
