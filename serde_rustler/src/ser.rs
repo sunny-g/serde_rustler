@@ -44,9 +44,12 @@ impl<'a> ser::Serializer for Serializer<'a> {
         Ok(v.encode(self.env))
     }
 
+    #[inline]
     fn serialize_none(self) -> Result<Self::Ok, Self::Error> {
-        Ok(atoms::nil().encode(self.env))
+        self.serialize_unit()
     }
+
+    #[inline]
     fn serialize_some<T>(self, value: &T) -> Result<Self::Ok, Self::Error>
     where
         T: ?Sized + ser::Serialize,
@@ -111,16 +114,19 @@ impl<'a> ser::Serializer for Serializer<'a> {
     }
 
     /// Serializes unit (empty tuple) as `nil`.
+    #[inline]
     fn serialize_unit(self) -> Result<Self::Ok, Self::Error> {
-        self.serialize_none()
+        Ok(atoms::nil().encode(self.env))
     }
 
+    #[inline]
     /// Serializes `struct Unit` as `nil`.
     fn serialize_unit_struct(self, _name: &'static str) -> Result<Self::Ok, Self::Error> {
-        self.serialize_none()
+        self.serialize_unit()
     }
 
-    /// Serializes `E::A` in `enum E { A, B }` as `:A` or `"A"`, depending on if the atom `:A` has already been created.
+    /// Serializes `E::A` in `enum E { A, B }` as `:A` or `"A"`, depending on
+    /// if the atom `:A` has already been created.
     fn serialize_unit_variant(
         self,
         _name: &'static str,
@@ -130,7 +136,9 @@ impl<'a> ser::Serializer for Serializer<'a> {
         util::str_to_term(&self.env, variant).or(Err(Error::InvalidVariantName))
     }
 
-    /// Serializes `struct Millimeters(u8)` as a tagged tuple: `{:Millimeters, u8}` or `{"Millimeters", u8}`, depending on if the atom `:Millimeters` has already been created.
+    /// Serializes `struct Millimeters(u8)` as a tagged tuple:
+    /// `{:Millimeters, u8}` or `{"Millimeters", u8}`, depending on if the atom
+    /// `:Millimeters` has already been created.
     fn serialize_newtype_struct<T>(
         self,
         name: &'static str,
@@ -145,8 +153,10 @@ impl<'a> ser::Serializer for Serializer<'a> {
         ser.to_tuple()
     }
 
-    /// Serializes `E::N` in `enum E { N(u8) }` as a tagged tuple: `{:N, u8}` or `{"N", u8}`, depending on if the atom `:N` has already been created.
-    /// Serializes `Result::Ok` and `Result::Err` of `enum Result { Ok(u8), Err(_) }` into `{:ok, u8}` or `{:err, _}`.
+    /// Serializes `E::N` in `enum E { N(u8) }` as a tagged tuple: `{:N, u8}`
+    /// or `{"N", u8}`, depending on if the atom `:N` has already been created.
+    /// Serializes `Result::Ok` and `Result::Err` of
+    /// `enum Result { Ok(u8), Err(_) }` into `{:ok, u8}` or `{:err, _}`.
     fn serialize_newtype_variant<T>(
         self,
         _name: &'static str,
@@ -174,7 +184,8 @@ impl<'a> ser::Serializer for Serializer<'a> {
         Ok(SequenceSerializer::new(self, Some(len), None))
     }
 
-    /// Serializes `struct Rgb(u8, u8, u8)` as an Elixir Record or Record-like tuple: `{:Rgb, u8, u8, u8}` or `{"Rgb", u8, u8, u8}`.
+    /// Serializes `struct Rgb(u8, u8, u8)` as an Elixir Record or Record-like
+    /// tuple: `{:Rgb, u8, u8, u8}` or `{"Rgb", u8, u8, u8}`.
     fn serialize_tuple_struct(
         self,
         name: &'static str,
@@ -200,7 +211,10 @@ impl<'a> ser::Serializer for Serializer<'a> {
         Ok(MapSerializer::new(self, len, None))
     }
 
-    /// Serializes as map, but attempts to include `%{:__struct__ => :STRUCT_NAME}` or `${:__struct__ => "STRUCT_NAME"}`, if the atom `:STRUCT_NAME` has not already been created, and will also attempt to serialize keys as atoms.
+    /// Serializes as map, but attempts to include
+    /// `%{:__struct__ => :STRUCT_NAME}` or `${:__struct__ => "STRUCT_NAME"}`,
+    /// if the atom `:STRUCT_NAME` has not already been created, and will also
+    /// attempt to serialize keys as atoms.
     fn serialize_struct(
         self,
         name: &'static str,
@@ -210,7 +224,10 @@ impl<'a> ser::Serializer for Serializer<'a> {
         Ok(MapSerializer::new(self, Some(len), Some(name_term)))
     }
 
-    /// Serializes the same as we serialize a struct: `E::S` of `enum E { S { r: u8, g: u8, b: u8 } }` is a map including `%{:__struct__ => :S}` or `${:__struct__ => "S"}`.
+    /// Serializes the same as we serialize a struct: `E::S` of
+    /// `enum E { S { r: u8, g: u8, b: u8 } }` is a map including
+    /// `%{:__struct__ => :S}` or `${:__struct__ => "S"}`.
+    #[inline]
     fn serialize_struct_variant(
         self,
         _name: &'static str,

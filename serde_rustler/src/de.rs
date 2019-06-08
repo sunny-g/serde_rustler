@@ -59,9 +59,8 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
                     visitor.visit_bool(b)
                 } else {
                     // unit variant (atom)
-                    let enum_type = EnumDeserializerType::Any;
-                    let de = EnumDeserializer::new(enum_type, self.term, &[], None)?;
-                    visitor.visit_enum(de)
+                    let string = atoms::term_to_str(&self.term)?;
+                    visitor.visit_string(string)
                 }
             }
             // i8, i16, i32, i64, u8, u16, u32, u64, f32, f64 (i128, u128)
@@ -95,7 +94,10 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
             // tuple struct (atom, len 3+)
             // tuple variant (atom, len 3+)
             // => if nothing else, tuple (any len)
-            TermType::Tuple => self.deserialize_seq(visitor),
+            TermType::Tuple => {
+                let tuple = util::validate_tuple(self.term, None)?;
+                visitor.visit_seq(SequenceDeserializer::new(tuple.into_iter()))
+            },
             _ => Err(Error::TypeHintsRequired),
         }
     }
@@ -243,6 +245,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         visitor.visit_borrowed_bytes(util::parse_binary(self.term)?)
     }
 
+    #[inline]
     fn deserialize_unit_struct<V>(
         self,
         _name: &'static str,
@@ -280,7 +283,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        if !self.term.is_list() {
+        if !(self.term.is_list() | self.term.is_empty_list()) {
             return Err(Error::ExpectedList);
         }
 
@@ -401,6 +404,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         }
     }
 
+    #[inline]
     fn deserialize_ignored_any<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
