@@ -4,7 +4,7 @@
 [![fork](http://githubbadges.com/fork.svg?user=sunny-g&repo=serde_rustler&style=default)](https://github.com/sunny-g/serde_rustler/fork)
 <!-- [![Build Status](https://semaphoreci.com/api/v1/sunny-g/xdr/branches/master/badge.svg)](https://semaphoreci.com/sunny-g/xdr) -->
 
-[Serde](https://serde.rs) Serializer and Deserializer traits for [Rustler](https://github.com/rusterlium/rustler) NIFs.
+[Serde](https://serde.rs) Serializer and Deserializer for [Rustler](https://github.com/rusterlium/rustler) NIFs.
 
 ## Contents
 

@@ -6,7 +6,7 @@
 [![Documentation](https://docs.rs/serde_rustler/badge.svg)](https://docs.rs/serde_rustler)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 
-`serde_rustler` provides [Serde](https://serde.rs) Serializer and Deserializer traits for [Rustler](https://github.com/rusterlium/rustler) types, so you can easily serialize and deserialize native Rust types directly to and from native Elixir terms within your NIFs.
+`serde_rustler` provides a [Serde](https://serde.rs) Serializer and Deserializer for [Rustler](https://github.com/rusterlium/rustler) types, so you can easily serialize and deserialize native Rust types directly to and from native Elixir terms within your NIFs.
 
 ## Installation
 
@@ -14,7 +14,7 @@ Install from [Crates.io](https://crates.io/crates/serde_rustler):
 
 ```toml
 [dependencies]
-serde_rustler = "0.0.1"
+serde_rustler = "0.0.2"
 ```
 
 ## API Overview
@@ -138,7 +138,7 @@ end
 
 <a name="byte">2</a>: Requires specifying a specific serialize implementation, such as [`serde_bytes`](https://crates.io/crates/serde_bytes/).
 
-<a name="atom">3</a>: When serializing unknown input to terms, atoms will not be created and will instead be replaced with Elixir bitstrings. Therefore "records" will be tuples (`{bitstring, ...}`) and "structs" will be maps containing `%{:__struct__ => bitstring}` (feedback on this decision is welcome).
+<a name="atom">3</a>: When serializing unknown input to terms, atoms will not be created and will instead be replaced with Elixir bitstrings. Therefore "records" will be tuples (`{bitstring, ...}`) and "structs" will be maps containing `%{:__struct__ => bitstring}`. The unfortunate consequence of this is that `deserialize_any` will lack the necessary information needed deserialize many terms without type hints, such as `structs`, `enums` and `enum variants`, and `tuples`. (Feedback on how best to solve this is very welcome [here](https://github.com/sunny-g/serde_rustler/issues/2)).
 
 ## TODO
 
@@ -152,7 +152,7 @@ end
 
 | Version | Change Summary |
 | ------- | ---------------|
-| [v0.0.2](https://crates.io/crates/serde_rustler/0.0.2) | ... |
+| [v0.0.2](https://crates.io/crates/serde_rustler/0.0.2) | cleanup, better `deserialize_any` support |
 | [v0.0.1](https://crates.io/crates/serde_rustler/0.0.1) | initial release |
 
 ## Contributing

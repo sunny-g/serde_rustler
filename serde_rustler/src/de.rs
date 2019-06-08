@@ -44,8 +44,7 @@ macro_rules! try_parse_number {
 impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     type Error = Error;
 
-    // TODO
-    #[inline]
+    // TODO: deserializing some type from terms (i.e. tuples, records, structs, enums and variants) will currently fail
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value, Error>
     where
         V: Visitor<'de>,
