@@ -14,6 +14,7 @@ defmodule SerdeRustlerTests do
   def readme(_animal), do: err()
   def test(_test_impl, _test_name, _expected_term), do: err()
   def transcode(_term), do: err()
+  def transcode_dirty(_term), do: err()
 
   defp err(), do: :erlang.nif_error(:nif_not_loaded)
 end

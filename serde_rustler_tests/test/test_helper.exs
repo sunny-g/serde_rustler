@@ -4,7 +4,9 @@ defmodule SerdeRustlerTests.Helpers do
   @moduledoc false
   use ExUnit.Case
 
-  @doc "Runs the \"serialize\" test in the Rust NIF library"
+  @doc """
+  Runs the "serialize" test in the Rust NIF library
+  """
   def run_ser(test_name, expected_term) do
     serialized = SerdeRustlerTests.test("serialize", test_name, expected_term)
 
@@ -17,7 +19,9 @@ defmodule SerdeRustlerTests.Helpers do
     assert serialized == :ok, err_message
   end
 
-  @doc "Runs the \"deserialize\" test in the Rust NIF library"
+  @doc """
+  Runs the "deserialize" test in the Rust NIF library
+  """
   def run_de(test_name, expected_term) do
     deserialized = SerdeRustlerTests.test("deserialize", test_name, expected_term)
 

@@ -46,6 +46,13 @@ decode_inputs = [
   "Issue 90"
 ]
 
+transcode_jobs = %{
+  "serde_rustler" => &SerdeRustlerTests.transcode/1,
+  "serde_rustler (dirty)" => &SerdeRustlerTests.transcode_dirty/1
+}
+
+transcode_inputs = encode_inputs
+
 read_data = fn name ->
   name
   |> String.downcase()
@@ -56,39 +63,50 @@ read_data = fn name ->
   |> File.read!()
 end
 
-formatter_output = fn file_name ->
-  Path.expand("../output/" <> file_name, __DIR__)
+inputs = fn names ->
+  for name <- names, into: %{} do
+    name
+    |> read_data.()
+    |> (&{name, &1}).()
+  end
+end
+
+string_inputs = inputs
+
+json_inputs = fn names ->
+  for {name, file} <- inputs.(names), into: %{} do
+    Poison.decode!(file)
+    |> (&{name, &1}).()
+  end
+end
+
+formatters = fn filename ->
+  relpath = "../output/" <> filename
+
+  [
+    {Benchee.Formatters.Console, extended_statistics: true},
+    {Benchee.Formatters.HTML, file: Path.expand(relpath <> ".html", __DIR__)},
+    {Benchee.Formatters.Markdown, file: Path.expand(relpath <> ".md", __DIR__)}
+  ]
 end
 
 Benchee.run(encode_jobs,
   parallel: 4,
   memory_time: 2,
-  inputs:
-    for name <- encode_inputs, into: %{} do
-      name
-      |> read_data.()
-      |> Poison.decode!()
-      |> (&{name, &1}).()
-    end,
-  formatters: [
-    {Benchee.Formatters.Console, extended_statistics: true},
-    {Benchee.Formatters.HTML, file: formatter_output.("encode.html")},
-    {Benchee.Formatters.Markdown, file: formatter_output.("encode.md")}
-  ]
+  inputs: json_inputs.(encode_inputs),
+  formatters: formatters.("encode")
 )
 
 Benchee.run(decode_jobs,
   parallel: 4,
   memory_time: 2,
-  inputs:
-    for name <- decode_inputs, into: %{} do
-      name
-      |> read_data.()
-      |> (&{name, &1}).()
-    end,
-  formatters: [
-    {Benchee.Formatters.Console, extended_statistics: true},
-    {Benchee.Formatters.HTML, file: formatter_output.("decode.html")},
-    {Benchee.Formatters.Markdown, file: formatter_output.("decode.md")}
-  ]
+  inputs: string_inputs.(decode_inputs),
+  formatters: formatters.("decode")
+)
+
+Benchee.run(transcode_jobs,
+  parallel: 4,
+  memory_time: 2,
+  inputs: json_inputs.(transcode_inputs),
+  formatters: formatters.("transcode")
 )

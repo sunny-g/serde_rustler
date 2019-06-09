@@ -17,15 +17,19 @@ use std::error::Error as StdError;
 rustler_export_nifs! {
     "Elixir.SerdeRustlerTests",
     [
+        // json
         ("decode_json", 1, json::decode),
         ("decode_json_dirty", 1, json::decode, SchedulerFlags::DirtyCpu),
         ("encode_json_compact", 1, json::encode_compact),
         ("encode_json_compact_dirty", 1, json::encode_compact, SchedulerFlags::DirtyCpu),
         ("encode_json_pretty", 1, json::encode_pretty),
         ("encode_json_pretty_dirty", 1, json::encode_pretty, SchedulerFlags::DirtyCpu),
+
+        // tests
         ("readme", 1, readme),
         ("test", 3, test::test),
         ("transcode", 1, transcode),
+        ("transcode_dirty", 1, transcode, SchedulerFlags::DirtyCpu),
     ],
     None
 }
@@ -34,7 +38,7 @@ rustler_export_nifs! {
 #[inline]
 pub fn readme<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let animal: Animal = from_term(args[0])?;
-    println!("\n deserialized animal from README: {:?}", animal);
+    println!("\n deserialized animal from README example: {:?}", animal);
     to_term(env, animal).map_err(|err| err.into())
 }
 
@@ -48,7 +52,7 @@ pub fn transcode<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     })
 }
 
-pub fn tag_tuple<'a, F>(env: Env<'a>, func: F) -> NifResult<Term<'a>>
+fn tag_tuple<'a, F>(env: Env<'a>, func: F) -> NifResult<Term<'a>>
 where
     F: FnOnce() -> Result<Term<'a>, Error>,
 {
@@ -61,12 +65,12 @@ where
     }
 }
 
-pub fn ok_tuple<'a>(env: Env<'a>, term: Term<'a>) -> Term<'a> {
+fn ok_tuple<'a>(env: Env<'a>, term: Term<'a>) -> Term<'a> {
     let ok_atom_term = atoms::ok().encode(env);
     tuple::make_tuple(env, &vec![ok_atom_term, term])
 }
 
-pub fn error_tuple<'a>(env: Env<'a>, reason_term: Term<'a>) -> Term<'a> {
+fn error_tuple<'a>(env: Env<'a>, reason_term: Term<'a>) -> Term<'a> {
     let err_atom_term = atoms::error().encode(env);
     tuple::make_tuple(env, &vec![err_atom_term, reason_term])
 }
