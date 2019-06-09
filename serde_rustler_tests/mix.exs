@@ -59,13 +59,13 @@ defmodule SerdeRustlerTests.Mixfile do
       {:ex_doc,           "~> 0.19",  only: [:dev],         runtime: false},
       {:mix_test_watch,   "~> 0.8",   only: [:dev],         runtime: false},
       # JSON serialization libs for benchmarks
-      {:exjsx,            "~> 4.0",   only: [:bench]},
+      {:exjsx,            "~> 4.0",   only: [:dev, :bench]},
       {:jason,            "~> 1.1",   only: [:dev, :test, :bench]},
-      {:jiffy,            "~> 0.15",  only: [:bench]},
-      {:json,             "~> 1.2",   only: [:bench]},
-      {:jsone,            "~> 1.4",   only: [:bench]},
+      {:jiffy,            "~> 1.0",   only: [:dev, :bench]},
+      {:json,             "~> 1.3",   only: [:dev, :bench]},
+      {:jsone,            "~> 1.4",   only: [:dev, :bench]},
       {:poison,           "~> 4.0",   only: [:test, :bench]},
-      {:tiny,             "~> 1.0",   only: [:bench]},
+      {:tiny,             "~> 1.0",   only: [:dev, :bench]},
     ]
   end
 

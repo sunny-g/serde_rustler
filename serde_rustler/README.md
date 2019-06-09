@@ -165,13 +165,26 @@ end
 
 <a name="atom">3</a>: When serializing unknown input to terms, atoms will not be created and will instead be replaced with Elixir bitstrings. Therefore "records" will be tuples (`{bitstring, ...}`) and "structs" will be maps containing `%{:__struct__ => bitstring}`. The unfortunate consequence of this is that `deserialize_any` will lack the necessary information needed deserialize many terms without type hints, such as `structs`, `enums` and `enum variants`, and `tuples`. (Feedback on how best to solve this is very welcome [here](https://github.com/sunny-g/serde_rustler/issues/2)).
 
+## Benchmarks
+
+To run:
+```sh
+cd serde_rustler_tests
+MIX_ENV=bench mix run test/benchmarks.exs
+```
+
+[Benchmarks](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/test/benchmarks.exs) were ripped from the [Poison](https://github.com/devinus/poison) repo. The NIF using `serde_rustler` is compiled in `:release` mode by `rustler`.
+
+Benchmarks suggest that `serde_rustler` is somewhat faster than [`jiffy`](https://github.com/davisp/jiffy) when [encoding](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/output/encode.md) JSON, and generally no more than twice as slow as [`jiffy`](https://github.com/davisp/jiffy) or [`jason`](https://github.com/michalmuskala/jason) when [decoding](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/output/decode.md) JSON, and in both cases seems to use significantly less memory than pure-Elixir alternatives.
+
+Also take note of the results regarding the larger inputs `govtrack.json` (3.74 MB) and `issue-90.json` (7.75 MB) - these were benchmarked with identical NIFs [tagged](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/native/serde_rustler_tests/src/lib.rs#L21) to run in a [Dirty CPU Scheduler](http://erlang.org/doc/man/erl_nif.html).
+
 ## TODO
 
 - [ ] finalize behaviour around chars, charlists, iolists, map keys
 - [ ] still getting used to Rust, so may need to improve error handling nnd ergnomoics around API
 - [ ] support for `i128` and `u128`
 - [ ] more extensive (i.e. possible addition of smoke, property-based) testing
-- [ ] benchmarking
 
 ## Changelog
 

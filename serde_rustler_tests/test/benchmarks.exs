@@ -56,6 +56,10 @@ read_data = fn name ->
   |> File.read!()
 end
 
+formatter_output = fn file_name ->
+  Path.expand("../output/" <> file_name, __DIR__)
+end
+
 Benchee.run(encode_jobs,
   parallel: 4,
   memory_time: 2,
@@ -68,8 +72,8 @@ Benchee.run(encode_jobs,
     end,
   formatters: [
     {Benchee.Formatters.Console, extended_statistics: true},
-    {Benchee.Formatters.HTML, file: Path.expand("../output/encode.html", __DIR__)},
-    {Benchee.Formatters.Markdown, file: Path.expand("../output/encode.md", __DIR__)},
+    {Benchee.Formatters.HTML, file: formatter_output.("encode.html")},
+    {Benchee.Formatters.Markdown, file: formatter_output.("encode.md")}
   ]
 )
 
@@ -84,7 +88,7 @@ Benchee.run(decode_jobs,
     end,
   formatters: [
     {Benchee.Formatters.Console, extended_statistics: true},
-    {Benchee.Formatters.HTML, file: Path.expand("../output/decode.html", __DIR__)},
-    {Benchee.Formatters.Markdown, file: Path.expand("../output/decode.md", __DIR__)},
+    {Benchee.Formatters.HTML, file: formatter_output.("decode.html")},
+    {Benchee.Formatters.Markdown, file: formatter_output.("decode.md")}
   ]
 )
