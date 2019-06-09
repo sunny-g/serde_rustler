@@ -1,7 +1,7 @@
 [package]
 name = "serde_rustler"
 description = "Serde Serializer and Deserializer for Rustler NIFs"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Sunny G <sunny.gonna@gmail.com>"]
 repository = "https://github.com/sunny-g/serde_rustler"
 categories = ["encoding", "external-ffi-bindings", "serde", "rustler", "elixir"]

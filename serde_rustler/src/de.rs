@@ -99,7 +99,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
             TermType::Tuple => {
                 let tuple = util::validate_tuple(self.term, None)?;
                 visitor.visit_seq(SequenceDeserializer::new(tuple.into_iter()))
-            },
+            }
             _ => Err(Error::TypeHintsRequired),
         }
     }

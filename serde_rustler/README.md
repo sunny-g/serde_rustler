@@ -14,7 +14,7 @@ Install from [Crates.io](https://crates.io/crates/serde_rustler):
 
 ```toml
 [dependencies]
-serde_rustler = "0.0.2"
+serde_rustler = "0.0.3"
 ```
 
 ## API Overview
@@ -192,6 +192,7 @@ Also take note of the results regarding the larger inputs `govtrack.json` (3.74 
 
 | Version | Change Summary |
 | ------- | ---------------|
+| [v0.0.3](https://crates.io/crates/serde_rustler/0.0.3) | better `char` and `tuple` support, adds benchmarks |
 | [v0.0.2](https://crates.io/crates/serde_rustler/0.0.2) | cleanup, better `deserialize_any` support |
 | [v0.0.1](https://crates.io/crates/serde_rustler/0.0.1) | initial release |
 
