@@ -177,9 +177,9 @@ MIX_ENV=bench mix run test/benchmarks.exs
 
 NOTE: If someone can point out any mistakes I made that led to these ridiculous results, please let me know :)
 
-Benchmarks suggest that **`serde_rustler` is somewhat faster than [`jiffy`](https://github.com/davisp/jiffy) when [encoding](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/output/encode.md) JSON**, and generally comparable to / **no more than ~2-3x as slow as [`jiffy`](https://github.com/davisp/jiffy) or [`jason`](https://github.com/michalmuskala/jason) when [decoding](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/output/decode.md) JSON**, and in almost all cases, `serde_rustler` **seems to use significantly less memory than pure-Elixir alternatives**.
+Benchmarks suggest that **`serde_rustler` is somewhat faster than [`jiffy`](https://github.com/davisp/jiffy) when [encoding](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/output/encode.md) JSON**, and generally comparable to / **no more than ~2-3x as slow as [`jiffy`](https://github.com/davisp/jiffy) or [`jason`](https://github.com/michalmuskala/jason) when [decoding](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/output/decode.md) JSON**, and in almost all cases, `serde_rustler` **seems to use significantly less memory than pure-Elixir alternatives**, though this is likely has to do with running a NIF rather than an pure-Elixir function.
 
-Also take note of the results regarding the larger inputs `govtrack.json` (3.74 MB) and `issue-90.json` (7.75 MB) - the `serde_rustler (dirty)` NIFs are identical as before, but were [tagged](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/native/serde_rustler_tests/src/lib.rs#L21) to run in a [Dirty CPU Scheduler](http://erlang.org/doc/man/erl_nif.html).
+Also take note of the results for any test taking longer than 1ms or tests involving the larger inputs `govtrack.json` (3.74 MB) and `issue-90.json` (7.75 MB) - the `encode_json_compact` and `decode_json` NIFs have significantly higher variation in performance while their [dirty](http://erlang.org/doc/man/erl_nif.html) [equivalents](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/native/serde_rustler_tests/src/lib.rs#L21) `encode_json_compact_dirty` and `decode_json_dirty` are comparable to the originals in speed and have more reliable performance.
 
 ## TODO
 
@@ -187,6 +187,7 @@ Also take note of the results regarding the larger inputs `govtrack.json` (3.74 
 - [ ] still getting used to Rust, so may need to improve error handling and ergnomoics around API
 - [ ] support for `i128` and `u128`
 - [ ] more extensive (i.e. possible addition of smoke, property-based) testing
+- [ ] investigate `decode_json` (Serializer?) performance degradation
 
 ## Changelog
 

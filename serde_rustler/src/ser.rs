@@ -136,7 +136,10 @@ impl<'a> ser::Serializer for Serializer<'a> {
     #[inline]
     fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok, Self::Error> {
         let mut binary = OwnedBinary::new(v.len()).unwrap();
-        binary.as_mut_slice().write(v).unwrap();
+        binary
+            .as_mut_slice()
+            .write_all(v)
+            .or(Err(Error::InvalidBinary))?;
         Ok(binary.release(self.env).to_term(self.env))
     }
 
@@ -161,7 +164,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         _variant_index: u32,
         variant: &'static str,
     ) -> Result<Self::Ok, Self::Error> {
-        util::str_to_term(&self.env, variant).or(Err(Error::InvalidVariantName))
+        atoms::str_to_term(&self.env, variant).or(Err(Error::InvalidVariantName))
     }
 
     /// Serializes `struct Millimeters(u8)` as a tagged tuple:
@@ -176,7 +179,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
     where
         T: ?Sized + ser::Serialize,
     {
-        let name_term = util::str_to_term(&self.env, name).or(Err(Error::InvalidVariantName))?;
+        let name_term = atoms::str_to_term(&self.env, name).or(Err(Error::InvalidVariantName))?;
         let mut ser = SequenceSerializer::new(self, Some(2), Some(name_term));
         ser.add(value.serialize(self)?);
         ser.to_tuple()
@@ -224,7 +227,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeTupleStruct, Self::Error> {
-        let name_term = util::str_to_term(&self.env, name).or(Err(Error::InvalidVariantName))?;
+        let name_term = atoms::str_to_term(&self.env, name).or(Err(Error::InvalidVariantName))?;
         Ok(SequenceSerializer::new(self, Some(len), Some(name_term)))
     }
 

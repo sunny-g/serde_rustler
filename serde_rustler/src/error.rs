@@ -24,9 +24,6 @@ quick_error! {
         InvalidStringable {
             description("Failed to deserialize term as an &str")
         }
-        InvalidBinary {
-            description("Failed to deserialize binary")
-        }
         InvalidList {
             description("Failed to deserialize list")
         }
@@ -103,6 +100,9 @@ quick_error! {
         }
         InvalidStructName {
             description("Failed to serialize struct name to atom or string")
+        }
+        InvalidBinary {
+            description("Failed to serialize binary")
         }
         InvalidMap {
             description("Failed to serialize map to NIF map")
