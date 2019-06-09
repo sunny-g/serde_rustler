@@ -67,10 +67,10 @@ where
 
 fn ok_tuple<'a>(env: Env<'a>, term: Term<'a>) -> Term<'a> {
     let ok_atom_term = atoms::ok().encode(env);
-    tuple::make_tuple(env, &vec![ok_atom_term, term])
+    tuple::make_tuple(env, &[ok_atom_term, term])
 }
 
 fn error_tuple<'a>(env: Env<'a>, reason_term: Term<'a>) -> Term<'a> {
     let err_atom_term = atoms::error().encode(env);
-    tuple::make_tuple(env, &vec![err_atom_term, reason_term])
+    tuple::make_tuple(env, &[err_atom_term, reason_term])
 }

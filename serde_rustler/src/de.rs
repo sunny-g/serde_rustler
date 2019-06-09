@@ -523,7 +523,7 @@ where
                 let (key, value) = pair;
                 self.current_value = Some(value);
 
-                if let Some(_) = self.struct_name_term {
+                if self.struct_name_term.is_some() {
                     seed.deserialize(VariantNameDeserializer::from(key))
                         .map(Some)
                 } else {

@@ -2,12 +2,12 @@ use crate::{atoms, Error};
 use rustler::{types::tuple, Binary, Decoder, Encoder, Env, Term};
 
 pub fn str_to_term<'a>(env: &Env<'a>, string: &str) -> Result<Term<'a>, Error> {
-    atoms::str_to_term(env, string).or(Ok(string.encode(*env)))
+    atoms::str_to_term(env, string).or_else(|_| Ok(string.encode(*env)))
 }
 
 pub fn term_to_str(term: &Term) -> Result<String, Error> {
     atoms::term_to_string(term)
-        .or(term.decode())
+        .or_else(|_| term.decode())
         .or(Err(Error::ExpectedStringable))
 }
 
