@@ -137,27 +137,27 @@ end
 
 ### Conversion Table
 
-| Type Name | Serde (Rust) Values | Elixir Terms (default behaviour) |
-|-----------|------------------|---------------------|
-| bool | `true` or `false` | `true` or `false` |
-| <sup>[1](#todo)</sup> number | `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` (TODO: `i128` and `u128`) | `number` |
-| <sup>[1](#atom)</sup> char | `""` | `bitstring` |
-| string | `""` | `bitstring` |
-| <sup>[2](#byte)</sup> byte array | `&[u8]` or `Vec<u8>` | `<<_::_*8>>` |
-| option | `Some(T)` or `None` | `T` or `:nil` |
-| unit | `None` | `:nil` |
-| unit struct | `struct Unit` | `:nil` |
-| <sup>[3](#atom)</sup> unit variant | `E::A` in `enum UnitVariant { A }` | `:A` |
-| <sup>[3](#atom)</sup> newtype struct | `struct Millimeters(u8)` | `{:Millimeters, u8}` |
-| <sup>[3](#atom)</sup> newtype variant | `E::N` in `enum E { N(u8) }` | `{:N, u8}` |
-| newtype variant (any `Ok` and `Err` tagged enum) | `enum R<T, E> { Ok(T), Err(E) }` | `{:ok, T}` or `{:error, E}` |
-| seq | `Vec<T>` | `[T]` |
-| tuple | `(u8,)` | `{u8,}` |
-| <sup>[3](#atom)</sup> tuple struct | `struct Rgb(u8, u8, u8)` | `{:Rgb, u8, u8, u8}` |
-| <sup>[3](#atom)</sup> tuple variant | `E::T` in `enum E { T(u8, u8) }` | `{:T, u8, u8}` |
-| <sup>[1](#todo)</sup> map | `HashMap<K, V>` | `%{}` |
-| <sup>[3](#atom)</sup> struct | `struct Rgb { r: u8, g: u8, b: u8 }` | `%Rgb{ r: byte, g: byte, b: byte }` |
-| <sup>[3](#atom)</sup> struct variant | `E::S` in `enum E { Rgb { r: u8, g: u8, b: u8 } }` | `%Rgb{ r: byte, g: byte, b: byte }` |
+| Type Name | Serde (Rust) Values | Elixir Terms (default behaviour) | `deserialize_any` into Elixir Term |
+|-----|-----|-----|-----|
+| bool | `true` or `false` | `true` or `false` | `true` or `false` |
+| <sup>[1](#todo)</sup> number | `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` (TODO: `i128` and `u128`) | `number` | `number` as `f64`, `i64`, or `u64` |
+| char | `'A'` | `[u32]` | `[u32]` |
+| string | `""` | `bitstring` | `bitstring` |
+| <sup>[2](#byte)</sup> byte array | `&[u8]` or `Vec<u8>` | `<<_::_*8>>` | `bitstring` |
+| option | `Some(T)` or `None` | `T` or `:nil` | `T` or `:nil` |
+| unit | `None` | `:nil` | `:nil` |
+| unit struct | `struct Unit` | `:nil` | `:nil` |
+| <sup>[3](#atom)</sup> unit variant | `E::A` in `enum UnitVariant { A }` | `:A` | `"A"` |
+| <sup>[3](#atom)</sup> newtype struct | `struct Millimeters(u8)` | `{:Millimeters, u8}` | `["Millimeters", u8]` |
+| <sup>[3](#atom)</sup> newtype variant | `E::N` in `enum E { N(u8) }` | `{:N, u8}` | `["N", u8]` |
+| <sup>[3](#atom)</sup> newtype variant (any `Ok` and `Err` tagged enum) | `enum R<T, E> { Ok(T), Err(E) }` | `{:ok, T}` or `{:error, E}` | `["Ok", T]` or `["Err", E]` |
+| seq | `Vec<T>` | `[T,]` | `[T,]` |
+| tuple | `(u8,)` | `{u8,}` | `[u8,]` |
+| <sup>[3](#atom)</sup> tuple struct | `struct Rgb(u8, u8, u8)` | `{:Rgb, u8, u8, u8}` | `["Rgb", u8, u8, u8]` |
+| <sup>[3](#atom)</sup> tuple variant | `E::T` in `enum E { T(u8, u8) }` | `{:T, u8, u8}` | `["T", u8, u8]` |
+| <sup>[1](#todo)</sup> map | `HashMap<K, V>` | `%{}` | `%{}` |
+| <sup>[3](#atom)</sup> struct | `struct Rgb { r: u8, g: u8, b: u8 }` | `%Rgb{ r: u8, g: u8, b: u8 }` | `["Rgb", u8, u8, u8]` |
+| <sup>[3](#atom)</sup> struct variant | `E::S` in `enum E { Rgb { r: u8, g: u8, b: u8 } }` | `%Rgb{ r: u8, g: u8, b: u8 }` | `%{"r" => u8, "g" => u8, "b" => u8}` |
 
 <a name="todo">1</a>: API still being decided / implemented.
 
@@ -173,16 +173,18 @@ cd serde_rustler_tests
 MIX_ENV=bench mix run test/benchmarks.exs
 ```
 
-[Benchmarks](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/test/benchmarks.exs) were ripped from the [Poison](https://github.com/devinus/poison) repo. The NIF using `serde_rustler` is compiled in `:release` mode by `rustler`.
+[Benchmarks](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/test/benchmarks.exs) were ripped from the [Poison](https://github.com/devinus/poison) repo. The NIFs being called were implemented using [`serde-transcode`](https://github.com/sfackler/serde-transcode) to translate between `serde_rustler` and [`serde_json`](https://github.com/serde-rs/json) and were compiled in `:release` mode by `rustler`.
 
-Benchmarks suggest that `serde_rustler` is somewhat faster than [`jiffy`](https://github.com/davisp/jiffy) when [encoding](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/output/encode.md) JSON, and generally no more than twice as slow as [`jiffy`](https://github.com/davisp/jiffy) or [`jason`](https://github.com/michalmuskala/jason) when [decoding](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/output/decode.md) JSON, and in both cases seems to use significantly less memory than pure-Elixir alternatives.
+NOTE: If someone can point out any mistakes I made that led to these ridiculous results, please let me know :)
 
-Also take note of the results regarding the larger inputs `govtrack.json` (3.74 MB) and `issue-90.json` (7.75 MB) - these were benchmarked with identical NIFs [tagged](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/native/serde_rustler_tests/src/lib.rs#L21) to run in a [Dirty CPU Scheduler](http://erlang.org/doc/man/erl_nif.html).
+Benchmarks suggest that **`serde_rustler` is somewhat faster than [`jiffy`](https://github.com/davisp/jiffy) when [encoding](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/output/encode.md) JSON**, and generally comparable to / **no more than ~2-3x as slow as [`jiffy`](https://github.com/davisp/jiffy) or [`jason`](https://github.com/michalmuskala/jason) when [decoding](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/output/decode.md) JSON**, and in almost all cases, `serde_rustler` **seems to use significantly less memory than pure-Elixir alternatives**.
+
+Also take note of the results regarding the larger inputs `govtrack.json` (3.74 MB) and `issue-90.json` (7.75 MB) - the `serde_rustler (dirty)` NIFs are identical as before, but were [tagged](https://github.com/sunny-g/serde_rustler/blob/master/serde_rustler_tests/native/serde_rustler_tests/src/lib.rs#L21) to run in a [Dirty CPU Scheduler](http://erlang.org/doc/man/erl_nif.html).
 
 ## TODO
 
 - [ ] finalize behaviour around chars, charlists, iolists, map keys
-- [ ] still getting used to Rust, so may need to improve error handling nnd ergnomoics around API
+- [ ] still getting used to Rust, so may need to improve error handling and ergnomoics around API
 - [ ] support for `i128` and `u128`
 - [ ] more extensive (i.e. possible addition of smoke, property-based) testing
 
