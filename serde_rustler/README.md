@@ -143,7 +143,7 @@ end
 | <sup>[1](#todo)</sup> number | `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` (TODO: `i128` and `u128`) | `number` | `number` as `f64`, `i64`, or `u64` |
 | char | `'A'` | `[u32]` | `[u32]` |
 | string | `""` | `bitstring` | `bitstring` |
-| <sup>[2](#byte)</sup> byte array | `&[u8]` or `Vec<u8>` | `<<_::_*8>>` | `bitstring` |
+| byte array | `&[u8]` or `Vec<u8>` | `<<_::_*8>>` | `bitstring` |
 | option | `Some(T)` or `None` | `T` or `:nil` | `T` or `:nil` |
 | unit | `None` | `:nil` | `:nil` |
 | unit struct | `struct Unit` | `:nil` | `:nil` |
@@ -156,14 +156,12 @@ end
 | <sup>[3](#atom)</sup> tuple struct | `struct Rgb(u8, u8, u8)` | `{:Rgb, u8, u8, u8}` | `["Rgb", u8, u8, u8]` |
 | <sup>[3](#atom)</sup> tuple variant | `E::T` in `enum E { T(u8, u8) }` | `{:T, u8, u8}` | `["T", u8, u8]` |
 | <sup>[1](#todo)</sup> map | `HashMap<K, V>` | `%{}` | `%{}` |
-| <sup>[3](#atom)</sup> struct | `struct Rgb { r: u8, g: u8, b: u8 }` | `%Rgb{ r: u8, g: u8, b: u8 }` | `["Rgb", u8, u8, u8]` |
+| <sup>[3](#atom)</sup> struct | `struct Rgb { r: u8, g: u8, b: u8 }` | `%Rgb{ r: u8, g: u8, b: u8 }` | `%{"r" => u8, "g" => u8, "b" => u8}` |
 | <sup>[3](#atom)</sup> struct variant | `E::S` in `enum E { Rgb { r: u8, g: u8, b: u8 } }` | `%Rgb{ r: u8, g: u8, b: u8 }` | `%{"r" => u8, "g" => u8, "b" => u8}` |
 
 <a name="todo">1</a>: API still being decided / implemented.
 
-<a name="byte">2</a>: Requires specifying a specific serialize implementation, such as [`serde_bytes`](https://crates.io/crates/serde_bytes/).
-
-<a name="atom">3</a>: When serializing unknown input to terms, atoms will not be created and will instead be replaced with Elixir bitstrings. Therefore "records" will be tuples (`{bitstring, ...}`) and "structs" will be maps containing `%{:__struct__ => bitstring}`. The unfortunate consequence of this is that `deserialize_any` will lack the necessary information needed deserialize many terms without type hints, such as `structs`, `enums` and `enum variants`, and `tuples`. (Feedback on how best to solve this is very welcome [here](https://github.com/sunny-g/serde_rustler/issues/2)).
+<a name="atom">2</a>: When serializing unknown input to terms, atoms will not be created and will instead be replaced with Elixir bitstrings. Therefore "records" will be tuples (`{bitstring, ...}`) and "structs" will be maps containing `%{:__struct__ => bitstring}`. The unfortunate consequence of this is that `deserialize_any` will lack the necessary information needed deserialize many terms without type hints, such as `structs`, `enums` and `enum variants`, and `tuples`. (Feedback on how best to solve this is very welcome [here](https://github.com/sunny-g/serde_rustler/issues/2)).
 
 ## Benchmarks
 
