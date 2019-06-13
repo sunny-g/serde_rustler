@@ -17,7 +17,7 @@ Install from [Crates.io](https://crates.io/crates/serde_rustler):
 serde_rustler = "0.0.3"
 ```
 
-## API Overview
+## Quick Start
 
 ```rust
 #[macro_use] extern crate rustler;
@@ -32,7 +32,7 @@ rustler_export_nifs! {
 }
 
 #[derive(Serialize, Deserialize)]
-type Animal = ...;
+struct Animal = { ... };
 
 fn nif<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     // Deserialize term into a native Rust type.

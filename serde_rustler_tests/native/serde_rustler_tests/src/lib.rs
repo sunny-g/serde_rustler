@@ -42,7 +42,7 @@ pub fn readme<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     to_term(env, animal).map_err(|err| err.into())
 }
 
-/// Deserializes anything from an Elixir term and subsequently serializes the result abck to an Elixir term, returning it.
+/// Deserializes anything from an Elixir term and subsequently serializes the result back into an Elixir term, returning it.
 #[inline]
 pub fn transcode<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     tag_tuple(env, || {
