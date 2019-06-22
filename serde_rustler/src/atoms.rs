@@ -1,3 +1,5 @@
+//! Constants and utilities for conversion between Rust string-likes and Elixir atoms.
+
 use crate::Error;
 use rustler::{types::atom::Atom, Encoder, Env, Term};
 
@@ -7,11 +9,22 @@ lazy_static! {
 }
 
 rustler_atoms! {
+    /// The atom `nil`.
     atom nil;
+
+    /// The atom `:ok`.
     atom ok;
+
+    /// The atom `:error`.
     atom error;
+
+    /// The atom/Boolean `true`.
     atom true_ = "true";
+
+    /// The atom/Boolean `false`.
     atom false_ = "false";
+
+    /// The atom `:__struct__`.
     atom __struct__;
 }
 

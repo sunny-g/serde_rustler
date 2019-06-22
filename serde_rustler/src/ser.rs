@@ -4,12 +4,9 @@ use serde::{
     ser::{self, Serialize},
     serde_if_integer128,
 };
-use std::io::Write;
 
 /**
- * Converts a native Rust type into a native Elixir term.
- *
- * See [conversion table](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler#conversion-table) for details about serialization behavior.
+ * Converts a native Rust type into a native Elixir term. See [conversion table](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler#conversion-table) for details about serialization behavior.
  */
 #[inline]
 pub fn to_term<T>(env: Env, value: T) -> Result<Term, Error>
@@ -135,6 +132,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
 
     #[inline]
     fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok, Self::Error> {
+        use std::io::Write;
         let mut binary = OwnedBinary::new(v.len()).unwrap();
         binary
             .as_mut_slice()

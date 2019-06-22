@@ -5,64 +5,114 @@ defmodule SerdeRustlerTests.Json.JsonTest do
 
   setup :read_data
 
-  @tag filename: "blockchain.json"
-  test "Blockchain", ctx do
-    run_decode(ctx)
-    run_encode(ctx)
+  describe "Blockchain" do
+    @describetag filename: "blockchain.json"
+
+    test "decode", ctx do
+      run_decode(ctx)
+    end
+    test "encode", ctx do
+      run_encode(ctx)
+    end
   end
 
-  @tag filename: "github.json"
-  test "Github", ctx do
-    run_decode(ctx)
-    run_encode(ctx)
+  describe "Github" do
+    @describetag filename: "github.json"
+
+    test "decode", ctx do
+      run_decode(ctx)
+    end
+    test "encode", ctx do
+      run_encode(ctx)
+    end
   end
 
-  @tag filename: "giphy.json"
-  test "Giphy", ctx do
-    run_decode(ctx)
-    run_encode(ctx)
+  describe "Giphy" do
+    @describetag filename: "giphy.json"
+
+    test "decode", ctx do
+      run_decode(ctx)
+    end
+    test "encode", ctx do
+      run_encode(ctx)
+    end
   end
 
-  @tag filename: "govtrack.json"
-  test "GovTrack", ctx do
-    run_decode(ctx)
-    run_encode(ctx)
+  describe "GovTrack" do
+    @describetag filename: "govtrack.json"
+
+    test "decode", ctx do
+      run_decode(ctx)
+    end
+    test "encode", ctx do
+      run_encode(ctx)
+    end
   end
 
-  @tag filename: "issue-90.json"
-  test "Issue 90", ctx do
-    run_decode(ctx)
-    run_encode(ctx)
+  describe "Issue 90" do
+    @describetag filename: "issue-90.json"
+
+    test "decode", ctx do
+      run_decode(ctx)
+    end
+    test "encode", ctx do
+      run_encode(ctx)
+    end
   end
 
-  @tag filename: "json-generator-pretty.json"
-  test "JSON Generator (Pretty)", ctx do
-    run_decode(ctx)
-    run_encode(ctx)
+  describe "JSON Generator (Pretty)" do
+    @describetag filename: "json-generator-pretty.json"
+
+    test "decode", ctx do
+      run_decode(ctx)
+    end
+    test "encode", ctx do
+      run_encode(ctx)
+    end
   end
 
-  @tag filename: "json-generator.json"
-  test "JSON Generator", ctx do
-    run_decode(ctx)
-    run_encode(ctx)
+  describe "JSON Generator" do
+    @describetag filename: "json-generator.json"
+
+    test "decode", ctx do
+      run_decode(ctx)
+    end
+    test "encode", ctx do
+      run_encode(ctx)
+    end
   end
 
-  @tag filename: "pokedex.json"
-  test "Pokedex", ctx do
-    run_decode(ctx)
-    run_encode(ctx)
+  describe "Pokedex" do
+    @describetag filename: "pokedex.json"
+
+    test "decode", ctx do
+      run_decode(ctx)
+    end
+    test "encode", ctx do
+      run_encode(ctx)
+    end
   end
 
-  @tag filename: "utf-8-escaped.json"
-  test "UTF-8 escaped", ctx do
-    run_decode(ctx)
-    run_encode(ctx)
+  describe "UTF-8 escaped" do
+    @describetag filename: "utf-8-escaped.json"
+
+    test "decode", ctx do
+      run_decode(ctx)
+    end
+    test "encode", ctx do
+      run_encode(ctx)
+    end
   end
 
-  @tag filename: "utf-8-unescaped.json"
-  test "UTF-8 unescaped", ctx do
-    run_decode(ctx)
-    run_encode(ctx)
+  describe "UTF-8 unescaped" do
+    @describetag filename: "utf-8-unescaped.json"
+
+    test "decode", ctx do
+      run_decode(ctx)
+    end
+    test "encode", ctx do
+      run_encode(ctx)
+    end
   end
 
   defp read_data(ctx) do
@@ -79,7 +129,7 @@ defmodule SerdeRustlerTests.Json.JsonTest do
 
     assert expected == actual, ~s"""
       DECODING ERROR :: #{ctx[:filename]}
-      expected: #{inspect(ctx[:json])}
+      expected: #{inspect(expected)}
       actual: #{inspect(actual)}
     """
   end

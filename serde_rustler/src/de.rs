@@ -13,9 +13,7 @@ use serde::{
 use std::iter;
 
 /**
- * Converts a native Elixir term to a native Rust type.
- *
- * See [conversion table](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler#conversion-table) for details about deserialization behavior.
+ * Converts a native Elixir term to a native Rust type. See the [conversion table](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler#conversion-table) for details about deserialization behavior.
  */
 #[inline]
 pub fn from_term<'de, 'a: 'de, T>(term: Term<'a>) -> Result<T, Error>
@@ -54,10 +52,8 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         match self.term.get_type() {
             TermType::Atom => {
                 if util::is_nil(&self.term) {
-                    // unit (nil)
                     self.deserialize_unit(visitor)
                 } else if let Ok(b) = util::parse_bool(&self.term) {
-                    // bool (t, f)
                     visitor.visit_bool(b)
                 } else {
                     // unit variant (atom)
@@ -352,12 +348,13 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     where
         V: Visitor<'de>,
     {
-        if !self.term.is_map() {
-            return Err(Error::ExpectedMap);
+        // TODO: support keyword lists
+        if self.term.is_map() {
+            let iter = MapIterator::new(self.term).ok_or(Error::ExpectedMap)?;
+            visitor.visit_map(MapDeserializer::new(iter, None))
+        } else {
+            Err(Error::ExpectedMap)
         }
-
-        let iter = MapIterator::new(self.term).ok_or(Error::ExpectedMap)?;
-        visitor.visit_map(MapDeserializer::new(iter, None))
     }
 
     #[inline]

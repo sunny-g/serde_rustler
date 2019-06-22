@@ -1,5 +1,4 @@
-//!
-//!
+//! Serde support for [rustler](https://docs.rs/rustler).
 
 #![recursion_limit = "196"]
 

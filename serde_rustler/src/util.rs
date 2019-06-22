@@ -1,10 +1,12 @@
 use crate::{atoms, Error};
 use rustler::{types::tuple, Binary, Decoder, Encoder, Env, Term};
 
+/// Converts an `&str` to either an existing atom or an Elixir bitstring.
 pub fn str_to_term<'a>(env: &Env<'a>, string: &str) -> Result<Term<'a>, Error> {
     atoms::str_to_term(env, string).or_else(|_| Ok(string.encode(*env)))
 }
 
+/// Attempts to convert a stringable term into a `String`.
 pub fn term_to_str(term: &Term) -> Result<String, Error> {
     atoms::term_to_string(term)
         .or_else(|_| term.decode())
@@ -15,6 +17,7 @@ pub fn is_nil(term: &Term) -> bool {
     atoms::nil().eq(term)
 }
 
+/// Parses a boolean from a Term.
 pub fn parse_bool(term: &Term) -> Result<bool, Error> {
     if atoms::true_().eq(term) {
         Ok(true)
@@ -44,6 +47,7 @@ pub fn parse_str(term: Term) -> Result<&str, Error> {
     std::str::from_utf8(bytes).or(Err(Error::ExpectedStringable))
 }
 
+/// Asserts that the term is an Elixir binary
 pub fn validate_binary(term: &Term) -> Result<(), Error> {
     if !term.is_binary() {
         Err(Error::ExpectedBinary)
@@ -52,6 +56,7 @@ pub fn validate_binary(term: &Term) -> Result<(), Error> {
     }
 }
 
+/// Assert that the term is an Elixir tuple, and if so, return the underlying `Vec<Term>`.
 pub fn validate_tuple(term: Term, len: Option<usize>) -> Result<Vec<Term>, Error> {
     if !term.is_tuple() {
         return Err(Error::ExpectedTuple);
