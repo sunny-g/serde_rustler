@@ -1,0 +1,46 @@
+# .semaphore/semaphore.yml
+version: v1.0
+name: serde_rustler
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Install dependencies
+    task:
+      env_vars:
+        - name: MIX_ENV
+          value: test
+      prologue:
+        commands:
+          - kiex install 1.8
+          - sem-version elixir 1.8
+      jobs:
+        - name: mix and cache
+          commands:
+            - checkout
+            # Be sure to use --force to skip confirmation prompts
+            - mix local.hex --force
+            - mix local.rebar --force
+            - cache restore mix-deps-$SEMAPHORE_GIT_BRANCH-$(checksum mix.lock),mix-deps-$SEMAPHORE_GIT_BRANCH,mix-deps-master
+            - cache restore mix-build-$SEMAPHORE_GIT_BRANCH-$(checksum mix.lock),mix-build-$SEMAPHORE_GIT_BRANCH,mix-build-master
+            - mix do deps.get --all, compile
+            - cache store mix-deps-$SEMAPHORE_GIT_BRANCH-$(checksum mix.lock) deps
+            - cache store mix-build-$SEMAPHORE_GIT_BRANCH-$(checksum mix.lock) _build
+  - name: Tests
+    task:
+      env_vars:
+        - name: MIX_ENV
+          value: test
+      prologue:
+        commands:
+          - kiex install 1.8
+          - sem-version elixir 1.8
+          - checkout
+          # Restore dependencies and compiled code
+          - cache restore mix-deps-$SEMAPHORE_GIT_BRANCH-$(checksum mix.lock),mix-deps-$SEMAPHORE_GIT_BRANCH,mix-deps-master
+          - cache restore mix-build-$SEMAPHORE_GIT_BRANCH-$(checksum mix.lock),mix-build-$SEMAPHORE_GIT_BRANCH,mix-build-master
+      jobs:
+        - name: Run Tests
+          commands:
+            - mix test

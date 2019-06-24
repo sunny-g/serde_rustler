@@ -12,9 +12,7 @@ use serde::{
 };
 use std::iter;
 
-/**
- * Converts a native Elixir term to a native Rust type. See the [conversion table](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler#conversion-table) for details about deserialization behavior.
- */
+/// Converts a native Elixir term to a native Rust type. See the [conversion table](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler#conversion-table) for details about deserialization behavior.
 #[inline]
 pub fn from_term<'de, 'a: 'de, T>(term: Term<'a>) -> Result<T, Error>
 where
@@ -437,7 +435,8 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
     }
 }
 
-struct SequenceDeserializer<'a, I>
+/// SequenceDeserializer
+pub struct SequenceDeserializer<'a, I>
 where
     I: Iterator<Item = Term<'a>>,
 {
@@ -472,7 +471,8 @@ where
     }
 }
 
-struct MapDeserializer<'a, I>
+/// MapDeserializer
+pub struct MapDeserializer<'a, I>
 where
     I: Iterator,
 {
@@ -544,7 +544,8 @@ where
     }
 }
 
-enum EnumDeserializerType {
+/// EnumDeserializerType
+pub enum EnumDeserializerType {
     Any,
     Unit,
     Newtype,
@@ -552,7 +553,8 @@ enum EnumDeserializerType {
     Struct,
 }
 
-struct EnumDeserializer<'a> {
+/// EnumDeserializer
+pub struct EnumDeserializer<'a> {
     variant_type: EnumDeserializerType,
     variant_term: Term<'a>,
     variant: String,
@@ -681,7 +683,7 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
 }
 
 /// Deserializer for atoms and map keys.
-struct VariantNameDeserializer<'a> {
+pub struct VariantNameDeserializer<'a> {
     variant: Term<'a>,
 }
 

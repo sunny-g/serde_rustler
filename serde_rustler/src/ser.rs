@@ -5,10 +5,9 @@ use serde::{
     serde_if_integer128,
 };
 
-/**
- * Converts a native Rust type into a native Elixir term. See [conversion table](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler#conversion-table) for details about serialization behavior.
- */
 #[inline]
+/// Converts a native Rust type into a native Elixir term. See [conversion table](https://github.com/sunny-g/serde_rustler/tree/master/serde_rustler#conversion-table) for details about serialization behavior.
+///
 pub fn to_term<T>(env: Env, value: T) -> Result<Term, Error>
 where
     T: Serialize,
@@ -153,9 +152,9 @@ impl<'a> ser::Serializer for Serializer<'a> {
         self.serialize_unit()
     }
 
+    #[inline]
     /// Serializes `E::A` in `enum E { A, B }` as `:A` or `"A"`, depending on
     /// if the atom `:A` has already been created.
-    #[inline]
     fn serialize_unit_variant(
         self,
         _name: &'static str,
@@ -165,10 +164,10 @@ impl<'a> ser::Serializer for Serializer<'a> {
         atoms::str_to_term(&self.env, variant).or(Err(Error::InvalidVariantName))
     }
 
+    #[inline]
     /// Serializes `struct Millimeters(u8)` as a tagged tuple:
     /// `{:Millimeters, u8}` or `{"Millimeters", u8}`, depending on if the atom
     /// `:Millimeters` has already been created.
-    #[inline]
     fn serialize_newtype_struct<T>(
         self,
         name: &'static str,
@@ -183,11 +182,11 @@ impl<'a> ser::Serializer for Serializer<'a> {
         ser.to_tuple()
     }
 
+    #[inline]
     /// Serializes `E::N` in `enum E { N(u8) }` as a tagged tuple: `{:N, u8}`
     /// or `{"N", u8}`, depending on if the atom `:N` has already been created.
     /// Serializes `Result::Ok` and `Result::Err` of
     /// `enum Result { Ok(u8), Err(_) }` into `{:ok, u8}` or `{:err, _}`.
-    #[inline]
     fn serialize_newtype_variant<T>(
         self,
         _name: &'static str,
@@ -205,21 +204,21 @@ impl<'a> ser::Serializer for Serializer<'a> {
         }
     }
 
-    /// Serializes sequences as a Elixir lists.
     #[inline]
+    /// Serializes sequences as a Elixir lists.
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
         Ok(SequenceSerializer::new(self, len, None))
     }
 
-    /// Serializes tuples as Elixir tuples.
     #[inline]
+    /// Serializes tuples as Elixir tuples.
     fn serialize_tuple(self, len: usize) -> Result<Self::SerializeTuple, Self::Error> {
         Ok(SequenceSerializer::new(self, Some(len), None))
     }
 
+    #[inline]
     /// Serializes `struct Rgb(u8, u8, u8)` as an Elixir Record or Record-like
     /// tuple: `{:Rgb, u8, u8, u8}` or `{"Rgb", u8, u8, u8}`.
-    #[inline]
     fn serialize_tuple_struct(
         self,
         name: &'static str,
@@ -229,8 +228,8 @@ impl<'a> ser::Serializer for Serializer<'a> {
         Ok(SequenceSerializer::new(self, Some(len), Some(name_term)))
     }
 
-    /// Serializes `E::T` of `enum E { T(u8, u8) }` as an Elixir Record or Record-like tuple: `{:T, u8, u8}` or `{"T", u8, u8}`.
     #[inline]
+    /// Serializes `E::T` of `enum E { T(u8, u8) }` as an Elixir Record or Record-like tuple: `{:T, u8, u8}` or `{"T", u8, u8}`.
     fn serialize_tuple_variant(
         self,
         _name: &'static str,
@@ -241,17 +240,17 @@ impl<'a> ser::Serializer for Serializer<'a> {
         self.serialize_tuple_struct(variant, len)
     }
 
-    /// Serializes map as Elixir map. Keys *will not* serialize into atoms.
     #[inline]
+    /// Serializes map as Elixir map. Keys *will not* serialize into atoms.
     fn serialize_map(self, len: Option<usize>) -> Result<Self::SerializeMap, Self::Error> {
         Ok(MapSerializer::new(self, len, None))
     }
 
+    #[inline]
     /// Serializes as map, but attempts to include
     /// `%{:__struct__ => :STRUCT_NAME}` or `${:__struct__ => "STRUCT_NAME"}`,
     /// if the atom `:STRUCT_NAME` has not already been created, and will also
     /// attempt to serialize keys as atoms.
-    #[inline]
     fn serialize_struct(
         self,
         name: &'static str,
@@ -261,10 +260,10 @@ impl<'a> ser::Serializer for Serializer<'a> {
         Ok(MapSerializer::new(self, Some(len), Some(name_term)))
     }
 
+    #[inline]
     /// Serializes the same as we serialize a struct: `E::S` of
     /// `enum E { S { r: u8, g: u8, b: u8 } }` is a map including
     /// `%{:__struct__ => :S}` or `${:__struct__ => "S"}`.
-    #[inline]
     fn serialize_struct_variant(
         self,
         _name: &'static str,
@@ -276,9 +275,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
     }
 }
 
-/**
- *
- */
+/// SequenceSerializer
 pub struct SequenceSerializer<'a> {
     ser: Serializer<'a>,
     items: Vec<Term<'a>>,
@@ -388,9 +385,7 @@ impl<'a> ser::SerializeTupleVariant for SequenceSerializer<'a> {
     }
 }
 
-/**
- *
- */
+/// MapSerializer
 pub struct MapSerializer<'a> {
     ser: Serializer<'a>,
     name: Option<Term<'a>>,
