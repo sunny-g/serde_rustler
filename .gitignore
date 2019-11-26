@@ -4,3 +4,4 @@
 _build/
 deps/
 target/
+Cargo.lock
