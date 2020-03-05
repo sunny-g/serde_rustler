@@ -1,7 +1,7 @@
 use quick_error::quick_error;
 use rustler::Error as NifError;
 use serde::{de, ser};
-use std::{error::Error as StdError, fmt::Display};
+use std::fmt::Display;
 
 quick_error! {
     #[derive(Debug)]
@@ -118,7 +118,7 @@ quick_error! {
 
 impl From<Error> for NifError {
     fn from(err: Error) -> NifError {
-        NifError::RaiseTerm(Box::new(String::from(err.to_string())))
+        NifError::RaiseTerm(Box::new(err.to_string()))
     }
 }
 
