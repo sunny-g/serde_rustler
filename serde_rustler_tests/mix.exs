@@ -30,7 +30,6 @@ defmodule SerdeRustlerTests.Mixfile do
       elixir: "~> 1.8",
       build_embedded: in_production,
       start_permanent: in_production,
-      compilers: [:rustler] ++ Mix.compilers(),
       rustler_crates: rustler_crates()
     ]
   end
