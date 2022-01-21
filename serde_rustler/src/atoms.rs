@@ -10,22 +10,22 @@ lazy_static! {
 
 rustler::atoms! {
     /// The atom `nil`.
-     nil,
+    nil,
 
     /// The atom `:ok`.
-     ok,
+    ok,
 
     /// The atom `:error`.
-     error,
+    error,
 
     /// The atom/Boolean `true`.
-     true_ = "true",
+    true_ = "true",
 
     /// The atom/Boolean `false`.
-     false_ = "false",
+    false_ = "false",
 
     /// The atom `:__struct__`.
-     __struct__,
+    __struct__,
 }
 
 /**
