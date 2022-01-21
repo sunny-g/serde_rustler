@@ -2,7 +2,6 @@
 
 #![recursion_limit = "196"]
 
-#[macro_use]
 extern crate lazy_static;
 extern crate rustler;
 
