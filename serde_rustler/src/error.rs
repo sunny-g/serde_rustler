@@ -1,119 +1,115 @@
-use quick_error::quick_error;
-use rustler::Error as NifError;
-use serde::{de, ser};
 use std::fmt::Display;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        DeserializationError(err: String) {
-            display("{}", err)
-        }
-        TypeHintsRequired {
-            display("Cannot deserialize any, type hints are required")
-        }
-        InvalidAtom {
-            display("Failed to deserialize atom")
-        }
-        InvalidBoolean {
-            display("Failed to deserialize boolean")
-        }
-        InvalidNumber {
-            display("Failed to deserialize number")
-        }
-        InvalidStringable {
-            display("Failed to deserialize term as an &str")
-        }
-        InvalidList {
-            display("Failed to deserialize list")
-        }
-        InvalidTuple {
-            display("Failed to deserialize tuple")
-        }
-        InvalidSequenceElement {
-            display("Failed to deserialize sequence element")
-        }
+use rustler::Error as NifError;
+use serde::{de, ser};
+use thiserror::Error;
 
-        ExpectedAtom {
-            display("Expected to deserialize atom")
-        }
-        ExpectedBoolean {
-            display("Expected to deserialize boolean")
-        }
-        ExpectedBinary {
-            display("Expected to deserialize binary")
-        }
-        ExpectedNumber {
-            display("Expected to deserialize number")
-        }
-        ExpectedChar {
-            display("Expected to deserialize char")
-        }
-        ExpectedStringable {
-            display("Expected to deserialize a UTF-8 stringable term")
-        }
-        ExpectedNil {
-            display("Expected to deserialize nil")
-        }
-        ExpectedList {
-            display("Expected to deserialize list")
-        }
-        ExpectedTuple {
-            display("Expected to deserialize tuple")
-        }
-        ExpectedEnum {
-            display("Expected to deserialize enum")
-        }
-        ExpectedMap {
-            display("Expected to deserialize map")
-        }
-        ExpectedStruct {
-            display("Expected to deserialize struct")
-        }
-        ExpectedStructName {
-            display("Expected to deserialize struct name")
-        }
-        ExpectedStructValue {
-            display("Expected to deserialize struct value")
-        }
-        ExpectedUnitVariant {
-            display("Expected to deserialize unit variant")
-        }
-        ExpectedNewtypeStruct {
-            display("Expected to deserialize newtype struct tuple")
-        }
-        ExpectedNewtypeVariant {
-            display("Expected to deserialize newtype variant")
-        }
-        ExpectedTupleVariant {
-            display("Expected to deserialize tuple variant")
-        }
-        ExpectedStructVariant {
-            display("Expected to deserialize struct variant")
-        }
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("{0}")]
+    DeserializationError(String),
 
-        SerializationError(err: String) {
-            display("{}", err)
-        }
-        InvalidVariantName {
-            display("Failed to serialize variant to atom or string")
-        }
-        InvalidStructName {
-            display("Failed to serialize struct name to atom or string")
-        }
-        InvalidBinary {
-            display("Failed to serialize binary")
-        }
-        InvalidMap {
-            display("Failed to serialize map to NIF map")
-        }
-        InvalidStruct {
-            display("Failed to serialize struct to NIF struct")
-        }
-        InvalidStructKey {
-            display("Failed to serialize struct key")
-        }
-    }
+    #[error("Cannot deserialize any, type hints are required")]
+    TypeHintsRequired,
+
+    #[error("Failed to deserialize atom")]
+    InvalidAtom,
+
+    #[error("Failed to deserialize boolean")]
+    InvalidBoolean,
+
+    #[error("Failed to deserialize number")]
+    InvalidNumber,
+
+    #[error("Failed to deserialize term as an &str")]
+    InvalidStringable,
+
+    #[error("Failed to deserialize list")]
+    InvalidList,
+
+    #[error("Failed to deserialize tuple")]
+    InvalidTuple,
+
+    #[error("Failed to deserialize sequence element")]
+    InvalidSequenceElement,
+
+    #[error("Expected to deserialize atom")]
+    ExpectedAtom,
+
+    #[error("Expected to deserialize boolean")]
+    ExpectedBoolean,
+
+    #[error("Expected to deserialize binary")]
+    ExpectedBinary,
+
+    #[error("Expected to deserialize number")]
+    ExpectedNumber,
+
+    #[error("Expected to deserialize char")]
+    ExpectedChar,
+
+    #[error("Expected to deserialize a UTF-8 stringable term")]
+    ExpectedStringable,
+
+    #[error("Expected to deserialize nil")]
+    ExpectedNil,
+
+    #[error("Expected to deserialize list")]
+    ExpectedList,
+
+    #[error("Expected to deserialize tuple")]
+    ExpectedTuple,
+
+    #[error("Expected to deserialize enum")]
+    ExpectedEnum,
+
+    #[error("Expected to deserialize map")]
+    ExpectedMap,
+
+    #[error("Expected to deserialize struct")]
+    ExpectedStruct,
+
+    #[error("Expected to deserialize struct name")]
+    ExpectedStructName,
+
+    #[error("Expected to deserialize struct value")]
+    ExpectedStructValue,
+
+    #[error("Expected to deserialize unit variant")]
+    ExpectedUnitVariant,
+
+    #[error("Expected to deserialize newtype struct tuple")]
+    ExpectedNewtypeStruct,
+
+    #[error("Expected to deserialize new type variant")]
+    ExpectedNewtypeVariant,
+
+    #[error("Expected to deserialize tuple variant")]
+    ExpectedTupleVariant,
+
+    #[error("Expected to deserialize struct variant")]
+    ExpectedStructVariant,
+
+    #[error("{0}")]
+    SerializationError(String),
+
+    #[error("Failed to serialize variant to atom or string")]
+    InvalidVariantName,
+
+    #[error("Failed to serialize struct name to atom or string")]
+    InvalidStructName,
+
+    #[error("Failed to serialize variant to binary")]
+    InvalidBinary,
+
+    #[error("Failed to serialize NIF map")]
+    InvalidMap,
+
+    #[error("Failed to serialize struct to NIF struct")]
+    InvalidStruct,
+
+    #[error("Failed to serialize struct key")]
+    InvalidStructKey,
 }
 
 impl From<Error> for NifError {
