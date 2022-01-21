@@ -2,9 +2,6 @@
 //!
 //! See `run_ser_test` and `run_de_test` for details about how to use `serde_rustler::Serializer` and `serde_rustler::Deserializer`.
 
-#[macro_use]
-extern crate rustler;
-
 mod json;
 mod test;
 mod types;
@@ -12,9 +9,8 @@ mod types;
 use crate::types::Animal;
 use rustler::{types::tuple, Encoder, Env, NifResult, SchedulerFlags, Term};
 use serde_rustler::{atoms, from_term, to_term, Deserializer, Error, Serializer};
-use std::error::Error as StdError;
 
-rustler_export_nifs! {
+rustler::rustler_export_nifs! {
     "Elixir.SerdeRustlerTests",
     [
         // json
@@ -59,7 +55,7 @@ where
     match func() {
         Ok(term) => Ok(ok_tuple(env, term)),
         Err(reason) => {
-            let reason_term = reason.description().encode(env);
+            let reason_term = reason.to_string().encode(env);
             Ok(error_tuple(env, reason_term))
         }
     }
