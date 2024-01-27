@@ -29,7 +29,6 @@ defmodule SerdeRustlerTests.Mixfile do
       elixir:             "~> 1.8",
       build_embedded:     in_production,
       start_permanent:    in_production,
-      compilers:          [:rustler] ++ Mix.compilers(),
       rustler_crates:     rustler_crates(),
     ]
   end
@@ -45,7 +44,7 @@ defmodule SerdeRustlerTests.Mixfile do
   end
 
   defp deps() do
-    [ {:rustler,        "~> 0.20.0"},
+    [ {:rustler,        "~> 0.22"},
     ]
   end
 
