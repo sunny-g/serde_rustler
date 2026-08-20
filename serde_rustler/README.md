@@ -2,6 +2,7 @@
 
 <!-- [![GitHub tag](https://img.shields.io/github/tag/Naereen/StrapDown.js.svg)](https://GitHub.com/Naereen/StrapDown.js/tags/) -->
 <!-- [![Build Status](https://semaphoreci.com/api/v1/sunny-g/xdr/branches/master/badge.svg)](https://semaphoreci.com/sunny-g/xdr) -->
+
 [![Crates.io](https://img.shields.io/crates/v/serde_rustler.svg)](https://crates.io/crates/serde_rustler)
 [![Documentation](https://docs.rs/serde_rustler/badge.svg)](https://docs.rs/serde_rustler)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
@@ -20,12 +21,10 @@ serde_rustler = "0.0.3"
 ## Quick Start
 
 ```rust
-#[macro_use] extern crate rustler;
-
 use serde::{Serialize, Deserialize}
 use serde_rustler::{from_term, to_term};
 
-rustler_export_nifs! {
+rustler::rustler_export_nifs! {
     "Elixir.SerdeRustlerTests",
     [("nif", 1, nif)],
     None
@@ -48,14 +47,11 @@ fn nif<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 Below is a more comprehensive example of how you might use `serde_rustler` within a rust NIF...
 
 ```rust
-#[macro_use]
-extern crate rustler;
-
 use rustler::{Env, error::Error as NifError, NifResult, Term};
 use serde::{Serialize, Deserialize};
 use serde_rustler::{from_term, to_term};
 
-rustler_export_nifs! {
+rustler::rustler_export_nifs! {
     "Elixir.SerdeNif",
     [("readme", 1, readme)],
     None
@@ -137,27 +133,27 @@ end
 
 ### Conversion Table
 
-| Type Name | Serde (Rust) Values | Elixir Terms (default behaviour) | `deserialize_any` into Elixir Term |
-|-----|-----|-----|-----|
-| bool | `true` or `false` | `true` or `false` | `true` or `false` |
-| <sup>[1](#todo)</sup> number | `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` (TODO: `i128` and `u128`) | `number` | `number` as `f64`, `i64`, or `u64` |
-| char | `'A'` | `[u32]` | `[u32]` |
-| string | `""` | `bitstring` | `bitstring` |
-| byte array | `&[u8]` or `Vec<u8>` | `<<_::_*8>>` | `bitstring` |
-| option | `Some(T)` or `None` | `T` or `:nil` | `T` or `:nil` |
-| unit | `None` | `:nil` | `:nil` |
-| unit struct | `struct Unit` | `:nil` | `:nil` |
-| <sup>[3](#atom)</sup> unit variant | `E::A` in `enum UnitVariant { A }` | `:A` | `"A"` |
-| <sup>[3](#atom)</sup> newtype struct | `struct Millimeters(u8)` | `{:Millimeters, u8}` | `["Millimeters", u8]` |
-| <sup>[3](#atom)</sup> newtype variant | `E::N` in `enum E { N(u8) }` | `{:N, u8}` | `["N", u8]` |
-| <sup>[3](#atom)</sup> newtype variant (any `Ok` and `Err` tagged enum) | `enum R<T, E> { Ok(T), Err(E) }` | `{:ok, T}` or `{:error, E}` | `["Ok", T]` or `["Err", E]` |
-| seq | `Vec<T>` | `[T,]` | `[T,]` |
-| tuple | `(u8,)` | `{u8,}` | `[u8,]` |
-| <sup>[3](#atom)</sup> tuple struct | `struct Rgb(u8, u8, u8)` | `{:Rgb, u8, u8, u8}` | `["Rgb", u8, u8, u8]` |
-| <sup>[3](#atom)</sup> tuple variant | `E::T` in `enum E { T(u8, u8) }` | `{:T, u8, u8}` | `["T", u8, u8]` |
-| <sup>[1](#todo)</sup> map | `HashMap<K, V>` | `%{}` | `%{}` |
-| <sup>[3](#atom)</sup> struct | `struct Rgb { r: u8, g: u8, b: u8 }` | `%Rgb{ r: u8, g: u8, b: u8 }` | `%{"r" => u8, "g" => u8, "b" => u8}` |
-| <sup>[3](#atom)</sup> struct variant | `E::S` in `enum E { Rgb { r: u8, g: u8, b: u8 } }` | `%Rgb{ r: u8, g: u8, b: u8 }` | `%{"r" => u8, "g" => u8, "b" => u8}` |
+| Type Name                                                              | Serde (Rust) Values                                                                          | Elixir Terms (default behaviour) | `deserialize_any` into Elixir Term   |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------ |
+| bool                                                                   | `true` or `false`                                                                            | `true` or `false`                | `true` or `false`                    |
+| <sup>[1](#todo)</sup> number                                           | `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` (TODO: `i128` and `u128`) | `number`                         | `number` as `f64`, `i64`, or `u64`   |
+| char                                                                   | `'A'`                                                                                        | `[u32]`                          | `[u32]`                              |
+| string                                                                 | `""`                                                                                         | `bitstring`                      | `bitstring`                          |
+| byte array                                                             | `&[u8]` or `Vec<u8>`                                                                         | `<<_::_*8>>`                     | `bitstring`                          |
+| option                                                                 | `Some(T)` or `None`                                                                          | `T` or `:nil`                    | `T` or `:nil`                        |
+| unit                                                                   | `None`                                                                                       | `:nil`                           | `:nil`                               |
+| unit struct                                                            | `struct Unit`                                                                                | `:nil`                           | `:nil`                               |
+| <sup>[3](#atom)</sup> unit variant                                     | `E::A` in `enum UnitVariant { A }`                                                           | `:A`                             | `"A"`                                |
+| <sup>[3](#atom)</sup> newtype struct                                   | `struct Millimeters(u8)`                                                                     | `{:Millimeters, u8}`             | `["Millimeters", u8]`                |
+| <sup>[3](#atom)</sup> newtype variant                                  | `E::N` in `enum E { N(u8) }`                                                                 | `{:N, u8}`                       | `["N", u8]`                          |
+| <sup>[3](#atom)</sup> newtype variant (any `Ok` and `Err` tagged enum) | `enum R<T, E> { Ok(T), Err(E) }`                                                             | `{:ok, T}` or `{:error, E}`      | `["Ok", T]` or `["Err", E]`          |
+| seq                                                                    | `Vec<T>`                                                                                     | `[T,]`                           | `[T,]`                               |
+| tuple                                                                  | `(u8,)`                                                                                      | `{u8,}`                          | `[u8,]`                              |
+| <sup>[3](#atom)</sup> tuple struct                                     | `struct Rgb(u8, u8, u8)`                                                                     | `{:Rgb, u8, u8, u8}`             | `["Rgb", u8, u8, u8]`                |
+| <sup>[3](#atom)</sup> tuple variant                                    | `E::T` in `enum E { T(u8, u8) }`                                                             | `{:T, u8, u8}`                   | `["T", u8, u8]`                      |
+| <sup>[1](#todo)</sup> map                                              | `HashMap<K, V>`                                                                              | `%{}`                            | `%{}`                                |
+| <sup>[3](#atom)</sup> struct                                           | `struct Rgb { r: u8, g: u8, b: u8 }`                                                         | `%Rgb{ r: u8, g: u8, b: u8 }`    | `%{"r" => u8, "g" => u8, "b" => u8}` |
+| <sup>[3](#atom)</sup> struct variant                                   | `E::S` in `enum E { Rgb { r: u8, g: u8, b: u8 } }`                                           | `%Rgb{ r: u8, g: u8, b: u8 }`    | `%{"r" => u8, "g" => u8, "b" => u8}` |
 
 <a name="todo">1</a>: API still being decided / implemented.
 
@@ -166,6 +162,7 @@ end
 ## Benchmarks
 
 To run:
+
 ```sh
 cd serde_rustler_tests
 MIX_ENV=bench mix run test/benchmarks.exs
@@ -189,11 +186,11 @@ Also take note of the results for any test taking longer than 1ms or tests invol
 
 ## Changelog
 
-| Version | Change Summary |
-| ------- | ---------------|
+| Version                                                | Change Summary                                     |
+| ------------------------------------------------------ | -------------------------------------------------- |
 | [v0.0.3](https://crates.io/crates/serde_rustler/0.0.3) | better `char` and `tuple` support, adds benchmarks |
-| [v0.0.2](https://crates.io/crates/serde_rustler/0.0.2) | cleanup, better `deserialize_any` support |
-| [v0.0.1](https://crates.io/crates/serde_rustler/0.0.1) | initial release |
+| [v0.0.2](https://crates.io/crates/serde_rustler/0.0.2) | cleanup, better `deserialize_any` support          |
+| [v0.0.1](https://crates.io/crates/serde_rustler/0.0.1) | initial release                                    |
 
 ## Contributing
 

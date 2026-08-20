@@ -3,29 +3,29 @@
 use crate::Error;
 use rustler::{types::atom::Atom, Encoder, Env, Term};
 
-lazy_static! {
+lazy_static::lazy_static! {
     pub static ref OK: String = String::from("Ok");
     pub static ref ERROR: String = String::from("Err");
 }
 
-rustler_atoms! {
+rustler::atoms! {
     /// The atom `nil`.
-    atom nil;
+    nil,
 
     /// The atom `:ok`.
-    atom ok;
+    ok,
 
     /// The atom `:error`.
-    atom error;
+    error,
 
     /// The atom/Boolean `true`.
-    atom true_ = "true";
+    true_ = "true",
 
     /// The atom/Boolean `false`.
-    atom false_ = "false";
+    false_ = "false",
 
     /// The atom `:__struct__`.
-    atom __struct__;
+    __struct__,
 }
 
 /**
